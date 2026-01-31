@@ -97,11 +97,13 @@ class ARScanActivity : AppCompatActivity() {
             finish()
         }
 
-        binding.captureButton.setOnClickListener {
-            captureCreature()
-        }
+        // Hide the old capture button - we now use tap-to-catch
+        binding.captureButton.visibility = View.GONE
 
-        binding.captureButton.isEnabled = false
+        // Set up tap-to-catch listener
+        binding.arOverlay.onCreatureTapped = { creature, success ->
+            handleCatchAttempt(creature, success)
+        }
     }
 
     private fun checkPermissions() {
@@ -283,7 +285,6 @@ class ARScanActivity : AppCompatActivity() {
 
     private fun showCreature(creature: Creature) {
         binding.arOverlay.showCreature(creature)
-        binding.captureButton.isEnabled = true
         binding.scanningIndicator.visibility = View.GONE
 
         // Update creature info card
@@ -293,7 +294,17 @@ class ARScanActivity : AppCompatActivity() {
         binding.creatureTypeText.setTextColor(creature.type.primaryColor)
         binding.creatureRarityText.text = getRarityText(creature.rarity)
 
-        binding.scanStatusText.text = "Creature Found!"
+        // Show catch rate hint
+        val catchRate = when (creature.rarity) {
+            1 -> 90
+            2 -> 75
+            3 -> 55
+            4 -> 35
+            5 -> 20
+            else -> 70
+        }
+        binding.scanStatusText.text = "Tap to catch! ($catchRate% chance)"
+        binding.scanStatusText.setTextColor(creature.type.primaryColor)
     }
 
     private fun getRarityText(rarity: Int): String {
@@ -307,34 +318,71 @@ class ARScanActivity : AppCompatActivity() {
         }
     }
 
-    private fun captureCreature() {
-        val creature = binding.arOverlay.getCreature() ?: return
+    private fun handleCatchAttempt(creature: Creature, success: Boolean) {
+        if (success) {
+            // Successful catch!
+            playCaptureAnimation {
+                lifecycleScope.launch {
+                    repository.catchCreature(
+                        creatureId = creature.id,
+                        latitude = currentLatitude,
+                        longitude = currentLongitude
+                    )
 
-        binding.captureButton.isEnabled = false
-
-        // Play capture animation
-        playCaptureAnimation {
-            // Save creature to database
-            lifecycleScope.launch {
-                repository.catchCreature(
-                    creatureId = creature.id,
-                    latitude = currentLatitude,
-                    longitude = currentLongitude
-                )
-
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        this@ARScanActivity,
-                        "${creature.name} caught!",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    // Reset for next creature
-                    binding.arOverlay.hideCreature()
-                    binding.creatureInfoCard.visibility = View.GONE
-                    binding.scanningIndicator.visibility = View.VISIBLE
-                    binding.scanStatusText.text = "Scanning..."
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@ARScanActivity,
+                            "${creature.name} caught!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        resetAfterCatch()
+                    }
                 }
+            }
+        } else {
+            // Failed catch - creature escapes!
+            playEscapeAnimation {
+                Toast.makeText(
+                    this@ARScanActivity,
+                    "${creature.name} escaped!",
+                    Toast.LENGTH_SHORT
+                ).show()
+                resetAfterCatch()
+            }
+        }
+    }
+
+    private fun resetAfterCatch() {
+        binding.arOverlay.hideCreature()
+        binding.creatureInfoCard.visibility = View.GONE
+        binding.scanningIndicator.visibility = View.VISIBLE
+        binding.scanStatusText.text = "Scanning..."
+        resetColorTracking()
+    }
+
+    private fun playEscapeAnimation(onComplete: () -> Unit) {
+        // Quick shake and fade out
+        val shake1 = ObjectAnimator.ofFloat(binding.arOverlay, View.TRANSLATION_X, 0f, 25f)
+        val shake2 = ObjectAnimator.ofFloat(binding.arOverlay, View.TRANSLATION_X, 25f, -25f)
+        val shake3 = ObjectAnimator.ofFloat(binding.arOverlay, View.TRANSLATION_X, -25f, 0f)
+        val fadeOut = ObjectAnimator.ofFloat(binding.arOverlay, View.ALPHA, 1f, 0f)
+
+        shake1.duration = 100
+        shake2.duration = 100
+        shake3.duration = 100
+        fadeOut.duration = 300
+
+        AnimatorSet().apply {
+            playSequentially(shake1, shake2, shake3, fadeOut)
+            start()
+        }
+
+        lifecycleScope.launch {
+            delay(600)
+            withContext(Dispatchers.Main) {
+                binding.arOverlay.translationX = 0f
+                binding.arOverlay.alpha = 1f
+                onComplete()
             }
         }
     }

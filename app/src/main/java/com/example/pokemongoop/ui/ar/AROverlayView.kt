@@ -4,11 +4,13 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import com.example.pokemongoop.data.database.entities.Creature
 import com.example.pokemongoop.models.GoopType
 import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.random.Random
 
 class AROverlayView @JvmOverloads constructor(
@@ -24,6 +26,9 @@ class AROverlayView @JvmOverloads constructor(
     private var bounceOffset = 0f
     private var glowRadius = 0f
     private var isAnimating = false
+
+    // Tap-to-catch listener
+    var onCreatureTapped: ((Creature, Boolean) -> Unit)? = null
 
     private val creaturePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -62,6 +67,41 @@ class AROverlayView @JvmOverloads constructor(
     fun hasCreature(): Boolean = creature != null
 
     fun getCreature(): Creature? = creature
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (event.action == MotionEvent.ACTION_DOWN && creature != null) {
+            val touchX = event.x
+            val touchY = event.y
+
+            // Check if tap is on the creature (with some tolerance)
+            val distance = sqrt(
+                (touchX - creatureX) * (touchX - creatureX) +
+                (touchY - (creatureY - bounceOffset)) * (touchY - (creatureY - bounceOffset))
+            )
+
+            val tapRadius = creatureSize * 0.8f // Generous tap area
+
+            if (distance <= tapRadius) {
+                creature?.let { c ->
+                    // Calculate catch success based on rarity
+                    // Common (1): 90%, Uncommon (2): 75%, Rare (3): 55%, Epic (4): 35%, Legendary (5): 20%
+                    val catchRate = when (c.rarity) {
+                        1 -> 0.90f
+                        2 -> 0.75f
+                        3 -> 0.55f
+                        4 -> 0.35f
+                        5 -> 0.20f
+                        else -> 0.70f
+                    }
+
+                    val success = Random.nextFloat() < catchRate
+                    onCreatureTapped?.invoke(c, success)
+                }
+                return true
+            }
+        }
+        return super.onTouchEvent(event)
+    }
 
     private fun startAnimations() {
         if (isAnimating) return
