@@ -27,8 +27,14 @@ class AROverlayView @JvmOverloads constructor(
     private var glowRadius = 0f
     private var isAnimating = false
 
-    // Tap-to-catch listener
+    // Tap-to-catch listener - returns creature and success based on rarity
     var onCreatureTapped: ((Creature, Boolean) -> Unit)? = null
+
+    // Arrow indicator paint
+    private val arrowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        style = Paint.Style.FILL
+    }
 
     private val creaturePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -84,14 +90,14 @@ class AROverlayView @JvmOverloads constructor(
             if (distance <= tapRadius) {
                 creature?.let { c ->
                     // Calculate catch success based on rarity
-                    // Common (1): 90%, Uncommon (2): 75%, Rare (3): 55%, Epic (4): 35%, Legendary (5): 20%
+                    // Common (1): 70%, Uncommon (2): 55%, Rare (3): 40%, Epic (4): 25%, Legendary (5): 15%
                     val catchRate = when (c.rarity) {
-                        1 -> 0.90f
-                        2 -> 0.75f
-                        3 -> 0.55f
-                        4 -> 0.35f
-                        5 -> 0.20f
-                        else -> 0.70f
+                        1 -> 0.70f
+                        2 -> 0.55f
+                        3 -> 0.40f
+                        4 -> 0.25f
+                        5 -> 0.15f
+                        else -> 0.50f
                     }
 
                     val success = Random.nextFloat() < catchRate
@@ -148,6 +154,18 @@ class AROverlayView @JvmOverloads constructor(
             val centerX = creatureX
             val centerY = creatureY - bounceOffset
 
+            // Check if creature is off-screen or near edges - draw arrow indicator
+            val screenCenterX = width / 2f
+            val screenCenterY = height / 2f
+            val margin = creatureSize
+
+            val isOffScreen = centerX < margin || centerX > width - margin ||
+                    centerY < margin || centerY > height - margin
+
+            if (isOffScreen) {
+                drawArrowIndicator(canvas, screenCenterX, screenCenterY, centerX, centerY, c.type)
+            }
+
             // Draw glow effect
             glowPaint.maskFilter = BlurMaskFilter(glowRadius + 20f, BlurMaskFilter.Blur.NORMAL)
             canvas.drawCircle(centerX, centerY, creatureSize / 2 + glowRadius, glowPaint)
@@ -161,6 +179,60 @@ class AROverlayView @JvmOverloads constructor(
             // Draw type indicator
             drawTypeIndicator(canvas, centerX, centerY + creatureSize / 2 + 30, c.type)
         }
+    }
+
+    private fun drawArrowIndicator(canvas: Canvas, fromX: Float, fromY: Float, toX: Float, toY: Float, type: GoopType) {
+        // Calculate direction to creature
+        val dx = toX - fromX
+        val dy = toY - fromY
+        val distance = sqrt(dx * dx + dy * dy)
+        if (distance == 0f) return
+
+        // Normalize and position arrow at edge of screen center area
+        val arrowDistance = 150f
+        val arrowX = fromX + (dx / distance) * arrowDistance
+        val arrowY = fromY + (dy / distance) * arrowDistance
+
+        // Calculate arrow rotation angle
+        val angle = kotlin.math.atan2(dy.toDouble(), dx.toDouble()).toFloat()
+
+        // Draw arrow
+        canvas.save()
+        canvas.translate(arrowX, arrowY)
+        canvas.rotate(Math.toDegrees(angle.toDouble()).toFloat())
+
+        // Arrow shape pointing right (will be rotated)
+        val arrowPath = Path().apply {
+            moveTo(30f, 0f)      // Tip
+            lineTo(-15f, -20f)  // Top back
+            lineTo(-5f, 0f)     // Inner notch
+            lineTo(-15f, 20f)   // Bottom back
+            close()
+        }
+
+        // Draw with creature's color
+        arrowPaint.color = type.primaryColor
+        canvas.drawPath(arrowPath, arrowPaint)
+
+        // Draw outline
+        val outlinePaint = Paint(arrowPaint).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = 3f
+            color = Color.WHITE
+        }
+        canvas.drawPath(arrowPath, outlinePaint)
+
+        canvas.restore()
+
+        // Draw pulsing circle around arrow
+        val pulseRadius = 40f + (glowRadius / 2)
+        val pulsePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = type.secondaryColor
+            alpha = 100
+            style = Paint.Style.STROKE
+            strokeWidth = 4f
+        }
+        canvas.drawCircle(arrowX, arrowY, pulseRadius, pulsePaint)
     }
 
     private fun drawGoopBody(canvas: Canvas, cx: Float, cy: Float, type: GoopType) {

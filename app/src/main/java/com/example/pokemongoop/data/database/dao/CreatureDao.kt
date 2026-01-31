@@ -39,4 +39,7 @@ interface CreatureDao {
 
     @Query("SELECT COUNT(*) FROM creatures")
     suspend fun getCreatureCount(): Int
+
+    @Query("SELECT * FROM creatures ORDER BY RANDOM() LIMIT 1")
+    suspend fun getRandomCreature(): Creature?
 }

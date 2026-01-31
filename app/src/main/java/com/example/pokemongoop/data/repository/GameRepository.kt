@@ -14,6 +14,7 @@ class GameRepository(private val database: AppDatabase) {
     suspend fun getCreatureById(id: Long) = database.creatureDao().getCreatureById(id)
     suspend fun getBaseCreatureByType(type: GoopType) = database.creatureDao().getBaseCreatureByType(type)
     suspend fun getEvolution(creatureId: Long) = database.creatureDao().getEvolution(creatureId)
+    suspend fun getRandomCreature() = database.creatureDao().getRandomCreature()
 
     // Player creature operations
     fun getAllPlayerCreatures() = database.playerCreatureDao().getAllPlayerCreatures()

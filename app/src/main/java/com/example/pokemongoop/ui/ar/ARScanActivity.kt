@@ -43,15 +43,14 @@ class ARScanActivity : AppCompatActivity() {
     private var currentLongitude: Double? = null
     private var isScanning = true
 
-    // Color tracking for sustained scanning
-    private var currentDetectedType: GoopType? = null
-    private var colorDetectionStartTime: Long = 0L
-    private val SPAWN_THRESHOLD_MS = 2500L // Must scan color for 2.5 seconds to spawn
-    private var spawnProgress = 0f // 0.0 to 1.0 for UI feedback
+    // Random spawn while scanning
+    private var lastSpawnCheckTime = 0L
+    private val SPAWN_CHECK_INTERVAL_MS = 2000L // Check for spawn every 2 seconds
+    private val SPAWN_CHANCE = 0.25f // 25% chance to spawn on each check
 
-    // Escape timer - creature flees if not caught in time
-    private var escapeJob: kotlinx.coroutines.Job? = null
-    private val ESCAPE_TIME_MS = 6000L // 6 seconds to catch before escape
+    // Catch attempt tracking
+    private var catchAttemptsRemaining = 5
+    private val MAX_CATCH_ATTEMPTS = 5
 
     private val repository by lazy {
         (application as GoopApplication).repository
@@ -187,10 +186,10 @@ class ARScanActivity : AppCompatActivity() {
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
                 .also {
-                    it.setAnalyzer(cameraExecutor, ColorAnalyzer { dominantColor ->
+                    it.setAnalyzer(cameraExecutor, ScanAnalyzer {
                         runOnUiThread {
                             if (isScanning && !binding.arOverlay.hasCreature()) {
-                                trackColorForSpawn(dominantColor)
+                                checkForRandomSpawn()
                             }
                         }
                     })
@@ -211,74 +210,24 @@ class ARScanActivity : AppCompatActivity() {
 
     }
 
-    private fun trackColorForSpawn(dominantColor: Int) {
+    private fun checkForRandomSpawn() {
         if (binding.arOverlay.hasCreature()) return
 
-        // Determine creature type based on dominant color
-        val detectedType = when {
-            isBlueish(dominantColor) -> GoopType.WATER
-            isReddish(dominantColor) -> GoopType.FIRE
-            isGreenish(dominantColor) -> GoopType.NATURE
-            isYellowish(dominantColor) -> GoopType.ELECTRIC
-            isDarkish(dominantColor) -> GoopType.SHADOW
-            else -> null
-        }
-
         val currentTime = System.currentTimeMillis()
+        if (currentTime - lastSpawnCheckTime < SPAWN_CHECK_INTERVAL_MS) return
 
-        if (detectedType != null) {
-            if (detectedType == currentDetectedType) {
-                // Same color - check if we've scanned long enough
-                val elapsedTime = currentTime - colorDetectionStartTime
-                spawnProgress = (elapsedTime.toFloat() / SPAWN_THRESHOLD_MS).coerceIn(0f, 1f)
+        lastSpawnCheckTime = currentTime
 
-                // Update UI to show scanning progress
-                updateScanProgress(detectedType, spawnProgress)
-
-                if (elapsedTime >= SPAWN_THRESHOLD_MS) {
-                    // Spawn the creature!
-                    spawnCreatureOfType(detectedType)
-                    resetColorTracking()
-                }
-            } else {
-                // Different color detected - reset tracking
-                currentDetectedType = detectedType
-                colorDetectionStartTime = currentTime
-                spawnProgress = 0f
-                updateScanProgress(detectedType, 0f)
-            }
-        } else {
-            // No valid color - reset
-            if (currentDetectedType != null) {
-                resetColorTracking()
-                binding.scanStatusText.text = "Scanning..."
-            }
+        // Random chance to spawn
+        if (Random.nextFloat() < SPAWN_CHANCE) {
+            spawnRandomCreature()
         }
     }
 
-    private fun resetColorTracking() {
-        currentDetectedType = null
-        colorDetectionStartTime = 0L
-        spawnProgress = 0f
-    }
-
-    private fun updateScanProgress(type: GoopType, progress: Float) {
-        val percentage = (progress * 100).toInt()
-        binding.scanStatusText.text = "Detecting ${type.displayName}... $percentage%"
-        binding.scanStatusText.setTextColor(type.primaryColor)
-    }
-
-    private fun isDarkish(color: Int): Boolean {
-        val r = Color.red(color)
-        val g = Color.green(color)
-        val b = Color.blue(color)
-        // Dark colors with low brightness
-        return r < 60 && g < 60 && b < 60
-    }
-
-    private fun spawnCreatureOfType(type: GoopType) {
+    private fun spawnRandomCreature() {
         lifecycleScope.launch {
-            val creature = repository.getBaseCreatureByType(type)
+            // Get a random creature from the database
+            val creature = repository.getRandomCreature()
             creature?.let {
                 withContext(Dispatchers.Main) {
                     showCreature(it)
@@ -288,6 +237,9 @@ class ARScanActivity : AppCompatActivity() {
     }
 
     private fun showCreature(creature: Creature) {
+        // Reset catch attempts
+        catchAttemptsRemaining = MAX_CATCH_ATTEMPTS
+
         binding.arOverlay.showCreature(creature)
         binding.scanningIndicator.visibility = View.GONE
 
@@ -298,62 +250,25 @@ class ARScanActivity : AppCompatActivity() {
         binding.creatureTypeText.setTextColor(creature.type.primaryColor)
         binding.creatureRarityText.text = getRarityText(creature.rarity)
 
-        // Show catch rate hint
-        val catchRate = when (creature.rarity) {
-            1 -> 90
-            2 -> 75
-            3 -> 55
-            4 -> 35
-            5 -> 20
-            else -> 70
-        }
-        binding.scanStatusText.text = "Tap to catch! ($catchRate% chance)"
+        // Show catch info with attempts
+        updateCatchStatus(creature)
+    }
+
+    private fun updateCatchStatus(creature: Creature) {
+        val catchRate = getCatchRate(creature.rarity)
+        binding.scanStatusText.text = "Tap to catch! ($catchRate%) - $catchAttemptsRemaining attempts left"
         binding.scanStatusText.setTextColor(creature.type.primaryColor)
-
-        // Start escape timer
-        startEscapeTimer(creature)
     }
 
-    private fun startEscapeTimer(creature: Creature) {
-        escapeJob?.cancel()
-        escapeJob = lifecycleScope.launch {
-            // Countdown updates
-            for (secondsLeft in (ESCAPE_TIME_MS / 1000).toInt() downTo 1) {
-                delay(1000)
-                if (binding.arOverlay.hasCreature()) {
-                    val catchRate = when (creature.rarity) {
-                        1 -> 90
-                        2 -> 75
-                        3 -> 55
-                        4 -> 35
-                        5 -> 20
-                        else -> 70
-                    }
-                    withContext(Dispatchers.Main) {
-                        binding.scanStatusText.text = "Tap to catch! ($catchRate%) - ${secondsLeft}s"
-                    }
-                }
-            }
-
-            // Time's up - creature escapes
-            if (binding.arOverlay.hasCreature()) {
-                withContext(Dispatchers.Main) {
-                    playEscapeAnimation {
-                        Toast.makeText(
-                            this@ARScanActivity,
-                            "${creature.name} fled!",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        resetAfterCatch()
-                    }
-                }
-            }
+    private fun getCatchRate(rarity: Int): Int {
+        return when (rarity) {
+            1 -> 70  // Common
+            2 -> 55  // Uncommon
+            3 -> 40  // Rare
+            4 -> 25  // Epic
+            5 -> 15  // Legendary
+            else -> 50
         }
-    }
-
-    private fun cancelEscapeTimer() {
-        escapeJob?.cancel()
-        escapeJob = null
     }
 
     private fun getRarityText(rarity: Int): String {
@@ -368,8 +283,6 @@ class ARScanActivity : AppCompatActivity() {
     }
 
     private fun handleCatchAttempt(creature: Creature, success: Boolean) {
-        cancelEscapeTimer()
-
         if (success) {
             // Successful catch!
             playCaptureAnimation {
@@ -391,15 +304,45 @@ class ARScanActivity : AppCompatActivity() {
                 }
             }
         } else {
-            // Failed catch - creature escapes!
-            playEscapeAnimation {
+            // Failed attempt - decrease remaining attempts
+            catchAttemptsRemaining--
+
+            if (catchAttemptsRemaining <= 0) {
+                // No more attempts - creature escapes!
+                playEscapeAnimation {
+                    Toast.makeText(
+                        this@ARScanActivity,
+                        "${creature.name} escaped!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    resetAfterCatch()
+                }
+            } else {
+                // Still have attempts - show feedback and update UI
+                playMissAnimation()
                 Toast.makeText(
                     this@ARScanActivity,
-                    "${creature.name} escaped!",
+                    "Missed! $catchAttemptsRemaining attempts left",
                     Toast.LENGTH_SHORT
                 ).show()
-                resetAfterCatch()
+                updateCatchStatus(creature)
             }
+        }
+    }
+
+    private fun playMissAnimation() {
+        // Quick shake to indicate miss
+        val shake1 = ObjectAnimator.ofFloat(binding.arOverlay, View.TRANSLATION_X, 0f, 15f)
+        val shake2 = ObjectAnimator.ofFloat(binding.arOverlay, View.TRANSLATION_X, 15f, -15f)
+        val shake3 = ObjectAnimator.ofFloat(binding.arOverlay, View.TRANSLATION_X, -15f, 0f)
+
+        shake1.duration = 50
+        shake2.duration = 50
+        shake3.duration = 50
+
+        AnimatorSet().apply {
+            playSequentially(shake1, shake2, shake3)
+            start()
         }
     }
 
@@ -408,7 +351,8 @@ class ARScanActivity : AppCompatActivity() {
         binding.creatureInfoCard.visibility = View.GONE
         binding.scanningIndicator.visibility = View.VISIBLE
         binding.scanStatusText.text = "Scanning..."
-        resetColorTracking()
+        binding.scanStatusText.setTextColor(Color.WHITE)
+        catchAttemptsRemaining = MAX_CATCH_ATTEMPTS
     }
 
     private fun playEscapeAnimation(onComplete: () -> Unit) {
@@ -460,94 +404,26 @@ class ARScanActivity : AppCompatActivity() {
         }
     }
 
-    private fun isBlueish(color: Int): Boolean {
-        val r = Color.red(color)
-        val g = Color.green(color)
-        val b = Color.blue(color)
-        return b > r && b > g && b > 100
-    }
-
-    private fun isReddish(color: Int): Boolean {
-        val r = Color.red(color)
-        val g = Color.green(color)
-        val b = Color.blue(color)
-        return r > g && r > b && r > 100
-    }
-
-    private fun isGreenish(color: Int): Boolean {
-        val r = Color.red(color)
-        val g = Color.green(color)
-        val b = Color.blue(color)
-        return g > r && g > b && g > 100
-    }
-
-    private fun isYellowish(color: Int): Boolean {
-        val r = Color.red(color)
-        val g = Color.green(color)
-        val b = Color.blue(color)
-        return r > 150 && g > 150 && b < 100
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         isScanning = false
-        cancelEscapeTimer()
         cameraExecutor.shutdown()
     }
 
-    // Image analyzer for detecting dominant colors
-    private class ColorAnalyzer(private val onColorDetected: (Int) -> Unit) : ImageAnalysis.Analyzer {
+    // Simple analyzer that triggers scan callbacks
+    private class ScanAnalyzer(private val onScanFrame: () -> Unit) : ImageAnalysis.Analyzer {
         private var lastAnalyzedTime = 0L
 
         override fun analyze(image: ImageProxy) {
             val currentTime = System.currentTimeMillis()
-            if (currentTime - lastAnalyzedTime < 1000) { // Analyze once per second
+            if (currentTime - lastAnalyzedTime < 500) { // Check twice per second
                 image.close()
                 return
             }
             lastAnalyzedTime = currentTime
 
-            // Convert to bitmap and get dominant color
-            val bitmap = image.toBitmap()
-            val dominantColor = getDominantColor(bitmap)
-            onColorDetected(dominantColor)
-
+            onScanFrame()
             image.close()
-        }
-
-        private fun ImageProxy.toBitmap(): Bitmap {
-            val buffer = planes[0].buffer
-            val bytes = ByteArray(buffer.remaining())
-            buffer.get(bytes)
-            return Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        }
-
-        private fun getDominantColor(bitmap: Bitmap): Int {
-            // Sample center region of the image
-            val centerX = bitmap.width / 2
-            val centerY = bitmap.height / 2
-            val sampleSize = minOf(bitmap.width, bitmap.height) / 4
-
-            var rSum = 0
-            var gSum = 0
-            var bSum = 0
-            var count = 0
-
-            for (x in (centerX - sampleSize).coerceAtLeast(0) until (centerX + sampleSize).coerceAtMost(bitmap.width)) {
-                for (y in (centerY - sampleSize).coerceAtLeast(0) until (centerY + sampleSize).coerceAtMost(bitmap.height)) {
-                    val pixel = bitmap.getPixel(x, y)
-                    rSum += Color.red(pixel)
-                    gSum += Color.green(pixel)
-                    bSum += Color.blue(pixel)
-                    count++
-                }
-            }
-
-            return if (count > 0) {
-                Color.rgb(rSum / count, gSum / count, bSum / count)
-            } else {
-                Color.GRAY
-            }
         }
     }
 }
