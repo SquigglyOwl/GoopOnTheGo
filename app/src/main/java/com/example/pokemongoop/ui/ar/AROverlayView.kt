@@ -3,10 +3,12 @@ package com.example.pokemongoop.ui.ar
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
+import androidx.core.content.ContextCompat
 import com.example.pokemongoop.data.database.entities.Creature
 import com.example.pokemongoop.models.GoopType
 import kotlin.math.sin
@@ -20,9 +22,10 @@ class AROverlayView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
 
     private var creature: Creature? = null
+    private var creatureBitmap: Bitmap? = null
     private var creatureX = 0f
     private var creatureY = 0f
-    private var creatureSize = 180f
+    private var creatureSize = 200f
     private var bounceOffset = 0f
     private var glowRadius = 0f
     private var isAnimating = false
@@ -32,6 +35,9 @@ class AROverlayView @JvmOverloads constructor(
 
     private val creaturePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val bitmapPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        isFilterBitmap = true
+    }
     private val eyePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
     }
@@ -58,12 +64,35 @@ class AROverlayView @JvmOverloads constructor(
         glowPaint.color = creature.type.secondaryColor
         glowPaint.alpha = 100
 
+        // Load creature image if available
+        creatureBitmap = loadCreatureImage(creature)
+
         startAnimations()
         invalidate()
     }
 
+    private fun loadCreatureImage(creature: Creature): Bitmap? {
+        val resName = creature.imageResName ?: return null
+        val resId = context.resources.getIdentifier(resName, "drawable", context.packageName)
+        if (resId == 0) return null
+
+        return try {
+            val drawable = ContextCompat.getDrawable(context, resId) ?: return null
+            val size = creatureSize.toInt()
+            val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            drawable.setBounds(0, 0, size, size)
+            drawable.draw(canvas)
+            bitmap
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     fun hideCreature() {
         creature = null
+        creatureBitmap?.recycle()
+        creatureBitmap = null
         stopAnimations()
         invalidate()
     }
@@ -159,11 +188,18 @@ class AROverlayView @JvmOverloads constructor(
             glowPaint.maskFilter = BlurMaskFilter(glowRadius + 20f, BlurMaskFilter.Blur.NORMAL)
             canvas.drawCircle(centerX, centerY, creatureSize / 2 + glowRadius, glowPaint)
 
-            // Draw creature body (blob shape)
-            drawGoopBody(canvas, centerX, centerY, c.type)
-
-            // Draw eyes
-            drawEyes(canvas, centerX, centerY)
+            // Draw creature - use image if available, otherwise fallback to blob
+            val bitmap = creatureBitmap
+            if (bitmap != null && !bitmap.isRecycled) {
+                // Draw image
+                val left = centerX - creatureSize / 2
+                val top = centerY - creatureSize / 2
+                canvas.drawBitmap(bitmap, left, top, bitmapPaint)
+            } else {
+                // Fallback: Draw blob shape
+                drawGoopBody(canvas, centerX, centerY, c.type)
+                drawEyes(canvas, centerX, centerY)
+            }
 
             // Draw type indicator
             drawTypeIndicator(canvas, centerX, centerY + creatureSize / 2 + 40, c.type)

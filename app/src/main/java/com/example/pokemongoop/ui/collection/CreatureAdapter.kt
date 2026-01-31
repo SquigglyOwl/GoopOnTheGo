@@ -4,6 +4,7 @@ import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -43,14 +44,25 @@ class CreatureAdapter(
             binding.creatureTypeText.text = creature.type.displayName
             binding.creatureTypeText.setTextColor(creature.type.primaryColor)
 
-            // Set creature visual color
-            val drawable = binding.creatureVisual.background as? GradientDrawable
-                ?: GradientDrawable().also {
-                    it.shape = GradientDrawable.OVAL
-                    binding.creatureVisual.background = it
+            // Set creature image or fallback to color
+            val context = binding.root.context
+            val resName = creature.imageResName
+            val resId = if (resName != null) {
+                context.resources.getIdentifier(resName, "drawable", context.packageName)
+            } else 0
+
+            if (resId != 0) {
+                // Use image
+                binding.creatureVisual.background = ContextCompat.getDrawable(context, resId)
+            } else {
+                // Fallback to colored circle
+                val drawable = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(creature.type.primaryColor)
+                    setStroke(4, creature.type.secondaryColor)
                 }
-            drawable.setColor(creature.type.primaryColor)
-            drawable.setStroke(4, creature.type.secondaryColor)
+                binding.creatureVisual.background = drawable
+            }
 
             // Set experience progress
             val expProgress = if (creature.experienceToEvolve > 0) {

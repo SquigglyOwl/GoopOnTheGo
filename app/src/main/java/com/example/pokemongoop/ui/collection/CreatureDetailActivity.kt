@@ -2,6 +2,7 @@ package com.example.pokemongoop.ui.collection
 
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import androidx.core.content.ContextCompat
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -95,14 +96,22 @@ class CreatureDetailActivity : AppCompatActivity() {
         val creature = details.creature
         val playerCreature = details.playerCreature
 
-        // Set visual
-        val drawable = binding.creatureVisual.background as? GradientDrawable
-            ?: GradientDrawable().also {
-                it.shape = GradientDrawable.OVAL
-                binding.creatureVisual.background = it
+        // Set visual - use image if available
+        val resName = creature.imageResName
+        val resId = if (resName != null) {
+            resources.getIdentifier(resName, "drawable", packageName)
+        } else 0
+
+        if (resId != 0) {
+            binding.creatureVisual.background = ContextCompat.getDrawable(this, resId)
+        } else {
+            val drawable = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(creature.type.primaryColor)
+                setStroke(8, creature.type.secondaryColor)
             }
-        drawable.setColor(creature.type.primaryColor)
-        drawable.setStroke(8, creature.type.secondaryColor)
+            binding.creatureVisual.background = drawable
+        }
 
         // Set name
         binding.creatureNameEdit.setText(playerCreature.nickname ?: creature.name)

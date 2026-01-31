@@ -18,5 +18,6 @@ data class Creature(
     val evolvesFromId: Long? = null,
     val evolvesToId: Long? = null,
     val experienceToEvolve: Int,
-    val description: String
+    val description: String,
+    val imageResName: String? = null // drawable resource name (e.g., "droplet_goop")
 )

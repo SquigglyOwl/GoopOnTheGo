@@ -278,9 +278,11 @@ class ARScanActivity : AppCompatActivity() {
     private fun spawnCreatureOfType(type: GoopType) {
         lifecycleScope.launch {
             val creature = repository.getBaseCreatureByType(type)
-            creature?.let {
-                withContext(Dispatchers.Main) {
-                    showCreature(it)
+            withContext(Dispatchers.Main) {
+                if (creature != null) {
+                    showCreature(creature)
+                } else {
+                    Toast.makeText(this@ARScanActivity, "No creature found for $type", Toast.LENGTH_SHORT).show()
                 }
             }
         }

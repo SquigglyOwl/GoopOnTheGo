@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
         DailyChallenge::class,
         FusionRecipe::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -45,6 +45,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "pokemongoop_database"
                 )
+                    .fallbackToDestructiveMigration()
                     .addCallback(DatabaseCallback())
                     .build()
                 INSTANCE = instance
@@ -56,6 +57,15 @@ abstract class AppDatabase : RoomDatabase() {
     private class DatabaseCallback : Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
+            INSTANCE?.let { database ->
+                CoroutineScope(Dispatchers.IO).launch {
+                    populateDatabase(database)
+                }
+            }
+        }
+
+        override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
+            super.onDestructiveMigration(db)
             INSTANCE?.let { database ->
                 CoroutineScope(Dispatchers.IO).launch {
                     populateDatabase(database)
@@ -85,35 +95,35 @@ abstract class AppDatabase : RoomDatabase() {
             var id = 1L
 
             // Water line
-            creatures.add(Creature(id++, "Droplet Goop", GoopType.WATER, 1, 30, 10, 15, 1, null, 2, 100, "A small water droplet that bounces around happily."))
-            creatures.add(Creature(id++, "Aqua Goop", GoopType.WATER, 2, 50, 20, 25, 2, 1, 3, 300, "A flowing water spirit with enhanced powers."))
-            creatures.add(Creature(id++, "Tsunami Goop", GoopType.WATER, 3, 80, 35, 40, 3, 2, null, 0, "A powerful wave spirit that commands the tides."))
+            creatures.add(Creature(id++, "Droplet Goop", GoopType.WATER, 1, 30, 10, 15, 1, null, 2, 100, "A small water droplet that bounces around happily.", "droplet_goop"))
+            creatures.add(Creature(id++, "Aqua Goop", GoopType.WATER, 2, 50, 20, 25, 2, 1, 3, 300, "A flowing water spirit with enhanced powers.", "aqua_goop"))
+            creatures.add(Creature(id++, "Tsunami Goop", GoopType.WATER, 3, 80, 35, 40, 3, 2, null, 0, "A powerful wave spirit that commands the tides.", "tsunami_goop"))
 
             // Fire line
-            creatures.add(Creature(id++, "Ember Goop", GoopType.FIRE, 1, 25, 15, 10, 1, null, 5, 100, "A tiny flame that flickers with curiosity."))
-            creatures.add(Creature(id++, "Blaze Goop", GoopType.FIRE, 2, 45, 30, 20, 2, 4, 6, 300, "A fiery spirit burning with determination."))
-            creatures.add(Creature(id++, "Inferno Goop", GoopType.FIRE, 3, 70, 50, 35, 3, 5, null, 0, "An unstoppable force of pure fire energy."))
+            creatures.add(Creature(id++, "Ember Goop", GoopType.FIRE, 1, 25, 15, 10, 1, null, 5, 100, "A tiny flame that flickers with curiosity.", "ember_goop"))
+            creatures.add(Creature(id++, "Blaze Goop", GoopType.FIRE, 2, 45, 30, 20, 2, 4, 6, 300, "A fiery spirit burning with determination.", "blaze_goop"))
+            creatures.add(Creature(id++, "Inferno Goop", GoopType.FIRE, 3, 70, 50, 35, 3, 5, null, 0, "An unstoppable force of pure fire energy.", "inferno_goop"))
 
             // Nature line
-            creatures.add(Creature(id++, "Sprout Goop", GoopType.NATURE, 1, 35, 12, 18, 1, null, 8, 100, "A seedling spirit growing in the sunlight."))
-            creatures.add(Creature(id++, "Leaf Goop", GoopType.NATURE, 2, 55, 22, 30, 2, 7, 9, 300, "A leafy creature connected to nature."))
-            creatures.add(Creature(id++, "Forest Goop", GoopType.NATURE, 3, 85, 38, 50, 3, 8, null, 0, "An ancient spirit of the deep woods."))
+            creatures.add(Creature(id++, "Sprout Goop", GoopType.NATURE, 1, 35, 12, 18, 1, null, 8, 100, "A seedling spirit growing in the sunlight.", "nature_goop"))
+            creatures.add(Creature(id++, "Leaf Goop", GoopType.NATURE, 2, 55, 22, 30, 2, 7, 9, 300, "A leafy creature connected to nature.", null))
+            creatures.add(Creature(id++, "Forest Goop", GoopType.NATURE, 3, 85, 38, 50, 3, 8, null, 0, "An ancient spirit of the deep woods.", null))
 
             // Electric line
-            creatures.add(Creature(id++, "Spark Goop", GoopType.ELECTRIC, 1, 28, 18, 8, 1, null, 11, 100, "A tiny electric spark full of energy."))
-            creatures.add(Creature(id++, "Volt Goop", GoopType.ELECTRIC, 2, 48, 35, 18, 2, 10, 12, 300, "A charged spirit crackling with power."))
-            creatures.add(Creature(id++, "Thunder Goop", GoopType.ELECTRIC, 3, 75, 55, 30, 3, 11, null, 0, "A legendary storm spirit of immense power."))
+            creatures.add(Creature(id++, "Spark Goop", GoopType.ELECTRIC, 1, 28, 18, 8, 1, null, 11, 100, "A tiny electric spark full of energy.", null))
+            creatures.add(Creature(id++, "Volt Goop", GoopType.ELECTRIC, 2, 48, 35, 18, 2, 10, 12, 300, "A charged spirit crackling with power.", null))
+            creatures.add(Creature(id++, "Thunder Goop", GoopType.ELECTRIC, 3, 75, 55, 30, 3, 11, null, 0, "A legendary storm spirit of immense power.", null))
 
             // Shadow line
-            creatures.add(Creature(id++, "Shade Goop", GoopType.SHADOW, 1, 32, 14, 12, 1, null, 14, 100, "A mysterious shadow that lurks in darkness."))
-            creatures.add(Creature(id++, "Phantom Goop", GoopType.SHADOW, 2, 52, 28, 24, 2, 13, 15, 300, "A ghostly presence from the shadow realm."))
-            creatures.add(Creature(id++, "Void Goop", GoopType.SHADOW, 3, 78, 45, 42, 3, 14, null, 0, "An entity from the deepest void."))
+            creatures.add(Creature(id++, "Shade Goop", GoopType.SHADOW, 1, 32, 14, 12, 1, null, 14, 100, "A mysterious shadow that lurks in darkness.", null))
+            creatures.add(Creature(id++, "Phantom Goop", GoopType.SHADOW, 2, 52, 28, 24, 2, 13, 15, 300, "A ghostly presence from the shadow realm.", null))
+            creatures.add(Creature(id++, "Void Goop", GoopType.SHADOW, 3, 78, 45, 42, 3, 14, null, 0, "An entity from the deepest void.", null))
 
             // Hybrid creatures (from fusion)
-            creatures.add(Creature(id++, "Steam Goop", GoopType.STEAM, 2, 60, 28, 28, 2, null, null, 0, "A misty fusion of water and fire."))
-            creatures.add(Creature(id++, "Lightning Bloom", GoopType.LIGHTNING_PLANT, 2, 58, 32, 25, 2, null, null, 0, "A shocking plant hybrid crackling with energy."))
-            creatures.add(Creature(id++, "Magma Goop", GoopType.MAGMA, 2, 65, 40, 35, 2, null, null, 0, "A molten fusion of fire and earth."))
-            creatures.add(Creature(id++, "Frost Goop", GoopType.ICE, 2, 55, 25, 32, 2, null, null, 0, "A frozen spirit of water and lightning."))
+            creatures.add(Creature(id++, "Steam Goop", GoopType.STEAM, 2, 60, 28, 28, 2, null, null, 0, "A misty fusion of water and fire.", null))
+            creatures.add(Creature(id++, "Lightning Bloom", GoopType.LIGHTNING_PLANT, 2, 58, 32, 25, 2, null, null, 0, "A shocking plant hybrid crackling with energy.", null))
+            creatures.add(Creature(id++, "Magma Goop", GoopType.MAGMA, 2, 65, 40, 35, 2, null, null, 0, "A molten fusion of fire and earth.", null))
+            creatures.add(Creature(id++, "Frost Goop", GoopType.ICE, 2, 55, 25, 32, 2, null, null, 0, "A frozen spirit of water and lightning.", null))
 
             return creatures
         }
