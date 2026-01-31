@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardBackgroundColor="#0f3460"
+    app:cardCornerRadius="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <!-- Achievement Icon -->
+        <View
+            android:id="@+id/achievementIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/creature_shape" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/achievementTitleText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="First Catch"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:id="@+id/achievementDescText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Catch your first creature"
+                android:textSize="12sp"
+                android:textColor="#AAAAAA" />
+
+            <ProgressBar
+                android:id="@+id/achievementProgress"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:layout_marginTop="8dp"
+                android:max="100"
+                android:progress="50"
+                android:progressTint="#FFD54F"
+                android:progressBackgroundTint="#1a1a2e" />
+
+            <TextView
+                android:id="@+id/progressText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="0/1"
+                android:textSize="10sp"
+                android:textColor="#666666" />
+        </LinearLayout>
+
+        <!-- Reward -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <ImageView
+                android:id="@+id/completedIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_send"
+                android:visibility="gone"
+                app:tint="#81C784" />
+
+            <TextView
+                android:id="@+id/rewardText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+50 XP"
+                android:textSize="12sp"
+                android:textColor="#FFD54F" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

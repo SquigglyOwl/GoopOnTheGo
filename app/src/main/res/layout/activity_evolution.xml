@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1a1a2e"
+    tools:context=".ui.evolution.EvolutionActivity">
+
+    <!-- Header -->
+    <LinearLayout
+        android:id="@+id/headerLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:background="#16213e"
+        android:gravity="center_vertical"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageButton
+            android:id="@+id/backButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:contentDescription="Back"
+            app:tint="#FFFFFF" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Evolution"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/instructionText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="Select a creature to evolve"
+        android:textSize="16sp"
+        android:textColor="#AAAAAA"
+        app:layout_constraintTop_toBottomOf="@id/headerLayout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Eligible Creatures List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/creaturesRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:padding="8dp"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toBottomOf="@id/instructionText"
+        app:layout_constraintBottom_toTopOf="@id/evolutionPreviewCard" />
+
+    <!-- Evolution Preview Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/evolutionPreviewCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="#0f3460"
+        app:cardCornerRadius="16dp"
+        app:layout_constraintBottom_toTopOf="@id/evolveButton"
+        tools:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center">
+
+            <!-- Current Creature -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <View
+                    android:id="@+id/currentCreatureVisual"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:background="@drawable/creature_shape" />
+
+                <TextView
+                    android:id="@+id/currentCreatureName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Droplet Goop"
+                    android:textSize="12sp"
+                    android:textColor="#FFFFFF" />
+            </LinearLayout>
+
+            <!-- Arrow -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="→"
+                android:textSize="32sp"
+                android:textColor="#81C784" />
+
+            <!-- Evolution Result -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <View
+                    android:id="@+id/evolvedCreatureVisual"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:background="@drawable/creature_shape" />
+
+                <TextView
+                    android:id="@+id/evolvedCreatureName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Aqua Goop"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#81C784" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Evolve Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/evolveButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_margin="16dp"
+        android:text="Evolve"
+        android:enabled="false"
+        app:cornerRadius="12dp"
+        app:backgroundTint="#81C784"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

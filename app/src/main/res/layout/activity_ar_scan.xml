@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    tools:context=".ui.ar.ARScanActivity">
+
+    <!-- Camera Preview -->
+    <androidx.camera.view.PreviewView
+        android:id="@+id/cameraPreview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- AR Overlay for drawing creatures -->
+    <com.example.pokemongoop.ui.ar.AROverlayView
+        android:id="@+id/arOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Top Bar -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:background="#80000000"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageButton
+            android:id="@+id/backButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:contentDescription="Back"
+            app:tint="#FFFFFF" />
+
+        <TextView
+            android:id="@+id/scanStatusText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Scanning..."
+            android:textSize="18sp"
+            android:textColor="#FFFFFF" />
+
+        <TextView
+            android:id="@+id/habitatText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:background="@drawable/rounded_background"
+            android:text="Unknown"
+            android:textSize="12sp"
+            android:textColor="#FFFFFF" />
+
+    </LinearLayout>
+
+    <!-- Creature Info Card (shown when creature appears) -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/creatureInfoCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="#CC16213e"
+        app:cardCornerRadius="16dp"
+        app:layout_constraintBottom_toTopOf="@id/captureButton"
+        tools:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/creatureNameText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Wild Goop"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:id="@+id/creatureTypeText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="4dp"
+                    android:text="Water"
+                    android:textSize="12sp"
+                    android:textColor="#4FC3F7"
+                    android:background="@drawable/type_badge_background" />
+
+                <TextView
+                    android:id="@+id/creatureRarityText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Common"
+                    android:textSize="12sp"
+                    android:textColor="#AAAAAA" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Capture Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/captureButton"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginBottom="32dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:enabled="false"
+        app:cornerRadius="40dp"
+        app:backgroundTint="#4FC3F7"
+        app:icon="@android:drawable/ic_menu_camera"
+        app:iconGravity="textStart"
+        app:iconPadding="0dp"
+        app:iconSize="32dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Scanning Animation Indicator -->
+    <ProgressBar
+        android:id="@+id/scanningIndicator"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:indeterminate="true"
+        android:indeterminateTint="#4FC3F7"
+        app:layout_constraintBottom_toTopOf="@id/captureButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
