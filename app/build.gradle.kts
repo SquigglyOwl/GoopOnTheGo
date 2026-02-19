@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.pokemongoop"
+    namespace = "com.example.gooponthego"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.pokemongoop"
+        applicationId = "com.example.gooponthego"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

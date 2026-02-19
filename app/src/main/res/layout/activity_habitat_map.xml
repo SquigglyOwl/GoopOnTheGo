@@ -39,7 +39,7 @@
     </LinearLayout>
 
     <!-- Map View (Custom Canvas) -->
-    <com.example.pokemongoop.ui.map.HabitatMapView
+    <com.example.gooponthego.ui.map.HabitatMapView
         android:id="@+id/habitatMapView"
         android:layout_width="match_parent"
         android:layout_height="0dp"

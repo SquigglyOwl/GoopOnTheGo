@@ -1,5 +1,5 @@
 ---
-title: "PokeGoop — Team Project Report"
+title: "GoopOnTheGo — Team Project Report"
 subtitle: "CSD3156 Mobile and Cloud Computing | Spring 2026"
 date: "February 2026"
 ---
@@ -19,7 +19,7 @@ date: "February 2026"
 
 # 1. Introduction & Game Overview
 
-**PokeGoop** is a location-based creature collection game for Android, inspired by Pokemon Go. Players scan their physical environment using the device camera to spawn and catch creatures called "Goops." Each creature type is linked to a real-world colour signature detected via the camera in real time. Players build a collection, evolve creatures by merging duplicates, fuse two different types into hybrid creatures, and track progress through achievements and daily challenges.
+**GoopOnTheGo** is a location-based creature collection game for Android, inspired by Pokemon Go. Players scan their physical environment using the device camera to spawn and catch creatures called "Goops." Each creature type is linked to a real-world colour signature detected via the camera in real time. Players build a collection, evolve creatures by merging duplicates, fuse two different types into hybrid creatures, and track progress through achievements and daily challenges.
 
 ## Core Game Loop
 
@@ -115,7 +115,7 @@ HomeActivity  (launcher)
 
 # 3. Database Design
 
-The app uses **Room ORM** on top of SQLite with a database named `pokemongoop_database` (schema version 2), comprising **6 entity tables**.
+The app uses **Room ORM** on top of SQLite with a database named `gooponthego_database` (schema version 2), comprising **6 entity tables**.
 
 ## 3.1 Entity-Relationship Overview
 

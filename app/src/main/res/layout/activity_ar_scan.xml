@@ -14,7 +14,7 @@
         android:layout_height="match_parent" />
 
     <!-- AR Overlay for drawing creatures -->
-    <com.example.pokemongoop.ui.ar.AROverlayView
+    <com.example.gooponthego.ui.ar.AROverlayView
         android:id="@+id/arOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

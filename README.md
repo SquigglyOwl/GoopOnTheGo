@@ -49,7 +49,7 @@ This project uses GitHub Actions for continuous integration. Every push and pull
 ## Project Structure
 
 ```
-app/src/main/java/com/example/pokemongoop/
+app/src/main/java/com/example/gooponthego/
 ├── GoopApplication.kt          # App initialization
 ├── models/
 │   └── GoopType.kt             # Creature type definitions
