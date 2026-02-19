@@ -40,7 +40,7 @@ Camera Scan → Colour Detected → Creature Spawns → Tap to Catch → Collect
 | AR-style Camera Scanning | Real-time colour detection triggers creature spawns |
 | Catch Mechanic | Tap creature within radius; rarity determines success rate |
 | Creature Collection | Filterable inventory with nicknames and favourites |
-| Evolution | Merge 3 identical creatures to evolve |
+| Evolution | Collect 3 identical creatures and merge them to evolve via the Evolution screen or Creature Detail screen |
 | Fusion | Combine 2 compatible types into a hybrid creature |
 | Habitat Map | GPS-based map showing nearby creature habitat zones |
 | Daily Challenges | Time-limited objectives refreshed each midnight |
@@ -106,7 +106,7 @@ HomeActivity  (launcher)
 | `ARScanActivity` | Camera preview, colour analysis, creature spawning, catch mechanic |
 | `CollectionActivity` | RecyclerView grid (3 columns), type and favourite filtering |
 | `CreatureDetailActivity` | Creature stats, nickname editing, evolve/release actions |
-| `EvolutionActivity` | Creature selection for merge-to-evolve |
+| `EvolutionActivity` | Lists all creatures with 3+ copies ready to merge-evolve; shows creature images in preview |
 | `FusionActivity` | Two-slot selection for type fusion |
 | `HabitatMapActivity` | Live GPS tracking, habitat zone detection |
 | `AchievementsActivity` | Achievement list with progress bars |
@@ -289,6 +289,10 @@ Evolution uses a **merge-to-evolve** mechanic. The player must own **3 identical
 - Requirement: `sameCreatures.size >= 3`
 - Action: delete instances[0..2], insert `PlayerCreature(evolution.id)`
 - XP reward: 50 XP added to `player_stats`
+
+Evolution can be triggered from two places:
+- **CreatureDetailActivity** — shows `X/3` progress bar and enables the Evolve button when 3 copies are owned
+- **EvolutionActivity** — dedicated screen that lists all creature types where the player owns 3+ copies, with actual creature images in the evolution preview (falls back to a coloured circle if no image is available)
 
 ## 5.2 Fusion System
 
@@ -557,6 +561,9 @@ SELECT * FROM creatures WHERE type = :type AND evolutionStage = 1
 | 588f7ba | Add GitHub Actions CI/CD workflow |
 | d27aaa9 | Unit tests |
 | d20fbd6 | Merge pull request #2 from SquigglyOwl/jeremy |
+| a7b3701 | Rename app from PokeGoop/PokemonGoop to GoopOnTheGo |
+| 04a83b0 | Renamed mobile game name |
+| c0f8db8 | Fix EvolutionActivity to show creatures with 3+ copies; use creature images in evolution preview |
 
 ## 7.2 CI/CD — GitHub Actions
 
@@ -586,7 +593,7 @@ Tests run automatically in CI on every push.
 
 ## 7.4 Code Structure & Style
 
-- Modular package structure: `data/database/`, `data/repository/`, `ui/ar/`, `ui/map/`, `ui/collection/`, `ui/achievements/`
+- Modular package structure: `com.example.gooponthego` — `data/database/`, `data/repository/`, `ui/ar/`, `ui/map/`, `ui/collection/`, `ui/achievements/`
 - Separation of concerns: DAOs handle queries only; Repository handles business logic; Activities handle UI only
 - Kotlin idioms: data classes, `when` expressions, extension functions, coroutines, `Flow`
 - Code follows the Android Kotlin Style Guide (https://developer.android.com/kotlin/style-guide)

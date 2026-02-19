@@ -25,6 +25,7 @@
         <!-- Main/Home Activity -->
         <activity
             android:name=".ui.home.HomeActivity"
+            android:screenOrientation="portrait"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -41,31 +42,37 @@
         <!-- Collection Activity -->
         <activity
             android:name=".ui.collection.CollectionActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
 
         <!-- Creature Detail Activity -->
         <activity
             android:name=".ui.collection.CreatureDetailActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
 
         <!-- Evolution Activity -->
         <activity
             android:name=".ui.evolution.EvolutionActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
 
         <!-- Fusion Activity -->
         <activity
             android:name=".ui.evolution.FusionActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
 
         <!-- Habitat Map Activity -->
         <activity
             android:name=".ui.map.HabitatMapActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
 
         <!-- Achievements Activity -->
         <activity
             android:name=".ui.achievements.AchievementsActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
 
     </application>
