@@ -251,7 +251,7 @@ class AROverlayView @JvmOverloads constructor(
         }
     }
 
-    private fun drawGoopBody(canvas: Canvas, cx: Float, cy: Float, type: GoopType) {
+    private fun drawGoopBody(canvas: Canvas, cx: Float, cy: Float, @Suppress("UNUSED_PARAMETER") type: GoopType) {
         val path = Path()
         val radius = creatureSize / 2
 

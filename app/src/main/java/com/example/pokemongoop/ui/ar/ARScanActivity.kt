@@ -243,26 +243,28 @@ class ARScanActivity : AppCompatActivity() {
         val g = Color.green(color)
         val b = Color.blue(color)
 
-        // Need minimum saturation to detect a color
         val max = maxOf(r, g, b)
         val min = minOf(r, g, b)
-        if (max - min < 30) return null  // Too gray/neutral
+
+        // Shadow: dark colours have low brightness across all channels
+        // Check this before the saturation guard so dark greys/blacks aren't rejected
+        if (r < 60 && g < 60 && b < 60) return GoopType.SHADOW
+
+        // Require meaningful saturation for all other colours
+        if (max - min < 40) return null  // Too grey/neutral
 
         return when {
-            // Blue - Water
-            b > r && b > g && b > 80 -> GoopType.WATER
+            // Yellow (Electric): high red AND high green, low blue — check BEFORE red-only Fire
+            r > 140 && g > 120 && b < 110 && g > b * 2 -> GoopType.ELECTRIC
 
-            // Red - Fire
-            r > g && r > b && r > 80 -> GoopType.FIRE
+            // Red/Orange (Fire): red dominant, green noticeably lower
+            r > 130 && r > g + 40 && r > b + 60 -> GoopType.FIRE
 
-            // Green - Nature
-            g > r && g > b && g > 80 -> GoopType.NATURE
+            // Blue (Water): blue clearly dominant
+            b > r && b > g && b > 90 -> GoopType.WATER
 
-            // Yellow (red + green) - Electric
-            r > 120 && g > 120 && b < 100 -> GoopType.ELECTRIC
-
-            // Dark - Shadow
-            r < 50 && g < 50 && b < 50 -> GoopType.SHADOW
+            // Green (Nature): green clearly dominant
+            g > r && g > b && g > 90 -> GoopType.NATURE
 
             else -> null
         }

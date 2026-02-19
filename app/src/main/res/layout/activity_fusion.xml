@@ -76,12 +76,13 @@
                 android:gravity="center"
                 android:padding="12dp">
 
-                <View
+                <ImageView
                     android:id="@+id/slot1Visual"
                     android:layout_width="60dp"
                     android:layout_height="60dp"
-                    android:background="@drawable/creature_shape"
-                    android:visibility="invisible" />
+                    android:scaleType="centerCrop"
+                    android:visibility="invisible"
+                    android:contentDescription="Slot 1 Goop" />
 
                 <TextView
                     android:id="@+id/slot1Text"
@@ -118,12 +119,13 @@
                 android:gravity="center"
                 android:padding="12dp">
 
-                <View
+                <ImageView
                     android:id="@+id/slot2Visual"
                     android:layout_width="60dp"
                     android:layout_height="60dp"
-                    android:background="@drawable/creature_shape"
-                    android:visibility="invisible" />
+                    android:scaleType="centerCrop"
+                    android:visibility="invisible"
+                    android:contentDescription="Slot 2 Goop" />
 
                 <TextView
                     android:id="@+id/slot2Text"
@@ -165,12 +167,13 @@
                 android:textSize="12sp"
                 android:textColor="#AAAAAA" />
 
-            <View
+            <ImageView
                 android:id="@+id/resultVisual"
                 android:layout_width="100dp"
                 android:layout_height="100dp"
                 android:layout_marginTop="8dp"
-                android:background="@drawable/creature_shape" />
+                android:scaleType="centerCrop"
+                android:contentDescription="Fusion result Goop" />
 
             <TextView
                 android:id="@+id/resultNameText"

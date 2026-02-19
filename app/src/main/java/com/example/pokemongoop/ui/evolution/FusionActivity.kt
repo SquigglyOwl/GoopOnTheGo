@@ -1,11 +1,11 @@
 package com.example.pokemongoop.ui.evolution
 
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -14,9 +14,9 @@ import com.example.pokemongoop.GoopApplication
 import com.example.pokemongoop.data.database.dao.PlayerCreatureWithDetails
 import com.example.pokemongoop.data.database.entities.Creature
 import com.example.pokemongoop.databinding.ActivityFusionBinding
+import com.example.pokemongoop.models.GoopType
 import com.example.pokemongoop.ui.collection.CreatureAdapter
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -91,16 +91,23 @@ class FusionActivity : AppCompatActivity() {
     private fun observeData() {
         lifecycleScope.launch {
             repository.getAllPlayerCreaturesWithDetails().collectLatest { creatures ->
-                creatureAdapter.submitList(creatures)
+                // Only show base types — hybrids cannot be fused further
+                val fusible = creatures.filter { it.creature.type in GoopType.getBasicTypes() }
+                creatureAdapter.submitList(fusible)
             }
         }
     }
 
     private fun selectCreature(details: PlayerCreatureWithDetails) {
-        // Don't allow selecting the same creature for both slots
         if (selectingSlot == 1) {
             if (details.playerCreature.id == slot2Creature?.playerCreature?.id) {
                 Toast.makeText(this, "Already selected for slot 2", Toast.LENGTH_SHORT).show()
+                return
+            }
+            // If slot 2 is filled, check compatibility before accepting
+            val other = slot2Creature
+            if (other != null && GoopType.getFusionResult(details.creature.type, other.creature.type) == null) {
+                Toast.makeText(this, "${details.creature.type.displayName} can't fuse with ${other.creature.type.displayName}", Toast.LENGTH_SHORT).show()
                 return
             }
             slot1Creature = details
@@ -109,6 +116,12 @@ class FusionActivity : AppCompatActivity() {
         } else {
             if (details.playerCreature.id == slot1Creature?.playerCreature?.id) {
                 Toast.makeText(this, "Already selected for slot 1", Toast.LENGTH_SHORT).show()
+                return
+            }
+            // If slot 1 is filled, check compatibility before accepting
+            val other = slot1Creature
+            if (other != null && GoopType.getFusionResult(other.creature.type, details.creature.type) == null) {
+                Toast.makeText(this, "${other.creature.type.displayName} can't fuse with ${details.creature.type.displayName}", Toast.LENGTH_SHORT).show()
                 return
             }
             slot2Creature = details
@@ -123,25 +136,26 @@ class FusionActivity : AppCompatActivity() {
     private fun updateSlot1UI(details: PlayerCreatureWithDetails) {
         binding.slot1Visual.visibility = View.VISIBLE
         binding.slot1Text.text = details.creature.name
-
-        val drawable = binding.slot1Visual.background as? GradientDrawable
-            ?: GradientDrawable().also {
-                it.shape = GradientDrawable.OVAL
-                binding.slot1Visual.background = it
-            }
-        drawable.setColor(details.creature.type.primaryColor)
+        setGoopImage(binding.slot1Visual, details.creature)
     }
 
     private fun updateSlot2UI(details: PlayerCreatureWithDetails) {
         binding.slot2Visual.visibility = View.VISIBLE
         binding.slot2Text.text = details.creature.name
+        setGoopImage(binding.slot2Visual, details.creature)
+    }
 
-        val drawable = binding.slot2Visual.background as? GradientDrawable
-            ?: GradientDrawable().also {
-                it.shape = GradientDrawable.OVAL
-                binding.slot2Visual.background = it
-            }
-        drawable.setColor(details.creature.type.primaryColor)
+    private fun setGoopImage(imageView: android.widget.ImageView, creature: Creature) {
+        val resName = creature.imageResName
+        val resId = if (resName != null) {
+            resources.getIdentifier(resName, "drawable", packageName)
+        } else 0
+
+        if (resId != 0) {
+            imageView.setImageDrawable(ContextCompat.getDrawable(this, resId))
+        } else {
+            imageView.setImageDrawable(null)
+        }
     }
 
     private fun checkFusionPossible() {
@@ -195,13 +209,7 @@ class FusionActivity : AppCompatActivity() {
         binding.resultNameText.text = creature.name
         binding.resultTypeText.text = "${creature.type.displayName} Type"
 
-        val drawable = binding.resultVisual.background as? GradientDrawable
-            ?: GradientDrawable().also {
-                it.shape = GradientDrawable.OVAL
-                binding.resultVisual.background = it
-            }
-        drawable.setColor(creature.type.primaryColor)
-        drawable.setStroke(4, creature.type.secondaryColor)
+        setGoopImage(binding.resultVisual, creature)
     }
 
     private fun performFusion() {

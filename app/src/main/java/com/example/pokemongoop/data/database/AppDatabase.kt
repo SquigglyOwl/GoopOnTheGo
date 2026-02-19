@@ -105,25 +105,25 @@ abstract class AppDatabase : RoomDatabase() {
             creatures.add(Creature(id++, "Inferno Goop", GoopType.FIRE, 3, 70, 50, 35, 3, 5, null, 0, "An unstoppable force of pure fire energy.", "inferno_goop"))
 
             // Nature line
-            creatures.add(Creature(id++, "Sprout Goop", GoopType.NATURE, 1, 35, 12, 18, 1, null, 8, 100, "A seedling spirit growing in the sunlight.", "nature_goop"))
-            creatures.add(Creature(id++, "Leaf Goop", GoopType.NATURE, 2, 55, 22, 30, 2, 7, 9, 300, "A leafy creature connected to nature.", null))
-            creatures.add(Creature(id++, "Forest Goop", GoopType.NATURE, 3, 85, 38, 50, 3, 8, null, 0, "An ancient spirit of the deep woods.", null))
+            creatures.add(Creature(id++, "Sprout Goop", GoopType.NATURE, 1, 35, 12, 18, 1, null, 8, 100, "A seedling spirit growing in the sunlight.", "sprout_goop"))
+            creatures.add(Creature(id++, "Leaf Goop", GoopType.NATURE, 2, 55, 22, 30, 2, 7, 9, 300, "A leafy creature connected to nature.", "leaf_goop"))
+            creatures.add(Creature(id++, "Forest Goop", GoopType.NATURE, 3, 85, 38, 50, 3, 8, null, 0, "An ancient spirit of the deep woods.", "forest_goop"))
 
             // Electric line
-            creatures.add(Creature(id++, "Spark Goop", GoopType.ELECTRIC, 1, 28, 18, 8, 1, null, 11, 100, "A tiny electric spark full of energy.", null))
-            creatures.add(Creature(id++, "Volt Goop", GoopType.ELECTRIC, 2, 48, 35, 18, 2, 10, 12, 300, "A charged spirit crackling with power.", null))
-            creatures.add(Creature(id++, "Thunder Goop", GoopType.ELECTRIC, 3, 75, 55, 30, 3, 11, null, 0, "A legendary storm spirit of immense power.", null))
+            creatures.add(Creature(id++, "Spark Goop", GoopType.ELECTRIC, 1, 28, 18, 8, 1, null, 11, 100, "A tiny electric spark full of energy.", "spark_goop"))
+            creatures.add(Creature(id++, "Volt Goop", GoopType.ELECTRIC, 2, 48, 35, 18, 2, 10, 12, 300, "A charged spirit crackling with power.", "volt_goop"))
+            creatures.add(Creature(id++, "Thunder Goop", GoopType.ELECTRIC, 3, 75, 55, 30, 3, 11, null, 0, "A legendary storm spirit of immense power.", "thunder_goop"))
 
             // Shadow line
-            creatures.add(Creature(id++, "Shade Goop", GoopType.SHADOW, 1, 32, 14, 12, 1, null, 14, 100, "A mysterious shadow that lurks in darkness.", null))
-            creatures.add(Creature(id++, "Phantom Goop", GoopType.SHADOW, 2, 52, 28, 24, 2, 13, 15, 300, "A ghostly presence from the shadow realm.", null))
-            creatures.add(Creature(id++, "Void Goop", GoopType.SHADOW, 3, 78, 45, 42, 3, 14, null, 0, "An entity from the deepest void.", null))
+            creatures.add(Creature(id++, "Shade Goop", GoopType.SHADOW, 1, 32, 14, 12, 1, null, 14, 100, "A mysterious shadow that lurks in darkness.", "shade_goop"))
+            creatures.add(Creature(id++, "Phantom Goop", GoopType.SHADOW, 2, 52, 28, 24, 2, 13, 15, 300, "A ghostly presence from the shadow realm.", "phantom_goop"))
+            creatures.add(Creature(id++, "Void Goop", GoopType.SHADOW, 3, 78, 45, 42, 3, 14, null, 0, "An entity from the deepest void.", "void_goop"))
 
             // Hybrid creatures (from fusion)
-            creatures.add(Creature(id++, "Steam Goop", GoopType.STEAM, 2, 60, 28, 28, 2, null, null, 0, "A misty fusion of water and fire.", null))
-            creatures.add(Creature(id++, "Lightning Bloom", GoopType.LIGHTNING_PLANT, 2, 58, 32, 25, 2, null, null, 0, "A shocking plant hybrid crackling with energy.", null))
-            creatures.add(Creature(id++, "Magma Goop", GoopType.MAGMA, 2, 65, 40, 35, 2, null, null, 0, "A molten fusion of fire and earth.", null))
-            creatures.add(Creature(id++, "Frost Goop", GoopType.ICE, 2, 55, 25, 32, 2, null, null, 0, "A frozen spirit of water and lightning.", null))
+            creatures.add(Creature(id++, "Steam Goop", GoopType.STEAM, 2, 60, 28, 28, 2, null, null, 0, "A misty fusion of water and fire.", "steam_goop"))
+            creatures.add(Creature(id++, "Lightning Bloom", GoopType.LIGHTNING_PLANT, 2, 58, 32, 25, 2, null, null, 0, "A shocking plant hybrid crackling with energy.", "lightning_bloom_goop"))
+            creatures.add(Creature(id++, "Magma Goop", GoopType.MAGMA, 2, 65, 40, 35, 2, null, null, 0, "A molten fusion of fire and earth.", "magma_goop"))
+            creatures.add(Creature(id, "Frost Goop", GoopType.ICE, 2, 55, 25, 32, 2, null, null, 0, "A frozen spirit of water and lightning.", "frost_goop"))
 
             return creatures
         }

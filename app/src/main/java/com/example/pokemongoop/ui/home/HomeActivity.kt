@@ -1,7 +1,9 @@
 package com.example.pokemongoop.ui.home
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -9,6 +11,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.pokemongoop.GoopApplication
+import com.example.pokemongoop.data.database.entities.DailyChallenge
 import com.example.pokemongoop.databinding.ActivityHomeBinding
 import com.example.pokemongoop.ui.ar.ARScanActivity
 import com.example.pokemongoop.ui.collection.CollectionActivity
@@ -24,6 +27,10 @@ class HomeActivity : AppCompatActivity() {
     private val repository by lazy {
         (application as GoopApplication).repository
     }
+
+    // Track last known completed count to detect when all 3 finish
+    private var lastCompletedCount = 0
+    private var bonusAlreadyShown = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,14 +89,44 @@ class HomeActivity : AppCompatActivity() {
         lifecycleScope.launch {
             repository.getActiveChallenges().collectLatest { challenges ->
                 challengeAdapter.submitList(challenges)
+                checkForBonusReward(challenges)
             }
         }
     }
 
     private fun checkDailyLogin() {
         lifecycleScope.launch {
-            repository.checkAndUpdateDailyStreak()
+            val streakBonus = repository.checkAndUpdateDailyStreak()
+            if (streakBonus > 0) {
+                Toast.makeText(
+                    this@HomeActivity,
+                    "Daily login bonus! +${streakBonus} XP (streak reward)",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
             repository.generateDailyChallenges()
         }
+    }
+
+    private fun checkForBonusReward(challenges: List<DailyChallenge>) {
+        if (challenges.isEmpty()) return
+        val completedCount = challenges.count { it.isCompleted }
+        val allDone = completedCount == challenges.size && challenges.size == 3
+
+        // Show the bonus dialog exactly once when all 3 flip to completed
+        if (allDone && !bonusAlreadyShown && completedCount > lastCompletedCount) {
+            bonusAlreadyShown = true
+            lifecycleScope.launch {
+                val bonusGranted = repository.checkAllChallengesBonus()
+                if (bonusGranted) {
+                    AlertDialog.Builder(this@HomeActivity)
+                        .setTitle("All Challenges Complete!")
+                        .setMessage("Amazing! You finished all 3 daily challenges.\n\nBonus reward: 2 random Goops added to your collection!")
+                        .setPositiveButton("Sweet!") { dialog, _ -> dialog.dismiss() }
+                        .show()
+                }
+            }
+        }
+        lastCompletedCount = completedCount
     }
 }

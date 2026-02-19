@@ -18,6 +18,9 @@ interface DailyChallengeDao {
     @Query("SELECT COUNT(*) FROM daily_challenges WHERE isCompleted = 1 AND dateCreated > :startOfDay")
     suspend fun getCompletedTodayCount(startOfDay: Long): Int
 
+    @Query("SELECT COUNT(*) FROM daily_challenges WHERE isCompleted = 1 AND expirationDate > :currentTime")
+    suspend fun getCompletedActiveCount(currentTime: Long = System.currentTimeMillis()): Int
+
     @Query("SELECT COUNT(*) FROM daily_challenges WHERE expirationDate > :currentTime")
     suspend fun getActiveChallengeCount(currentTime: Long = System.currentTimeMillis()): Int
 
