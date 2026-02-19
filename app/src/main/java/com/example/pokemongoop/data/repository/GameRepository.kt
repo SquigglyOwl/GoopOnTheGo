@@ -6,6 +6,7 @@ import com.example.pokemongoop.data.database.entities.*
 import com.example.pokemongoop.models.GoopType
 import kotlinx.coroutines.flow.Flow
 import java.util.Calendar
+import kotlin.random.Random
 
 class GameRepository(private val database: AppDatabase) {
 
@@ -115,6 +116,7 @@ class GameRepository(private val database: AppDatabase) {
         database.playerStatsDao().incrementTotalFused()
         database.playerStatsDao().addExperience(75)
         updateFusionAchievements()
+        updateFuseChallengeProgress()
 
         return fusedCreature.copy(id = id)
     }
@@ -138,8 +140,12 @@ class GameRepository(private val database: AppDatabase) {
     fun getPlayerStats() = database.playerStatsDao().getPlayerStats()
     suspend fun getPlayerStatsSync() = database.playerStatsDao().getPlayerStatsSync()
 
-    suspend fun checkAndUpdateDailyStreak() {
-        val stats = database.playerStatsDao().getPlayerStatsSync() ?: return
+    /**
+     * Checks and updates the daily login streak.
+     * Returns the streak XP bonus granted (0 if same-day login or first time).
+     */
+    suspend fun checkAndUpdateDailyStreak(): Int {
+        val stats = database.playerStatsDao().getPlayerStatsSync() ?: return 0
         val now = System.currentTimeMillis()
         val lastLogin = stats.lastLoginDate
 
@@ -155,17 +161,24 @@ class GameRepository(private val database: AppDatabase) {
         val daysDiff = if (thisYear == lastLoginYear) {
             today - lastLoginDay
         } else {
-            // Simplified - just check if it's the next day
             1
         }
 
         val newStreak = when {
-            daysDiff == 0 -> stats.dailyStreak // Same day
+            daysDiff == 0 -> stats.dailyStreak   // Same day — no bonus
             daysDiff == 1 -> stats.dailyStreak + 1 // Consecutive day
-            else -> 1 // Streak broken
+            else -> 1                              // Streak broken
         }
 
         database.playerStatsDao().updateStreak(newStreak, now)
+
+        // Grant streak XP bonus only on a new day login
+        if (daysDiff != 0) {
+            val bonus = newStreak * 10  // e.g. day-3 streak = 30 XP, day-7 = 70 XP
+            database.playerStatsDao().addExperience(bonus)
+            return bonus
+        }
+        return 0
     }
 
     // Achievement operations
@@ -226,21 +239,27 @@ class GameRepository(private val database: AppDatabase) {
         calendar.set(Calendar.MINUTE, 0)
         val expiration = calendar.timeInMillis
 
-        val challenges = listOf(
+        // Pool of possible challenges — pick 3 distinct ones randomly each day
+        val allTypes = GoopType.getBasicTypes()
+        val typeForChallenge = allTypes.random()
+        val catchCount = Random.nextInt(2, 5)      // 2, 3, or 4
+        val typeCount  = Random.nextInt(1, 3)      // 1 or 2
+
+        val pool = listOf(
             DailyChallenge(
-                title = "Catch 3 Goops",
-                description = "Catch any 3 Goop creatures today",
+                title = "Goop Catcher",
+                description = "Catch any $catchCount Goop creatures today",
                 challengeType = ChallengeType.CATCH_ANY,
-                targetCount = 3,
+                targetCount = catchCount,
                 rewardExperience = 50,
                 expirationDate = expiration
             ),
             DailyChallenge(
-                title = "Water Hunter",
-                description = "Catch 2 Water type Goops",
+                title = "${typeForChallenge.displayName} Hunter",
+                description = "Catch $typeCount ${typeForChallenge.displayName} type Goop${if (typeCount > 1) "s" else ""}",
                 challengeType = ChallengeType.CATCH_TYPE,
-                targetType = GoopType.WATER,
-                targetCount = 2,
+                targetType = typeForChallenge,
+                targetCount = typeCount,
                 rewardExperience = 75,
                 expirationDate = expiration
             ),
@@ -251,20 +270,32 @@ class GameRepository(private val database: AppDatabase) {
                 targetCount = 1,
                 rewardExperience = 100,
                 expirationDate = expiration
+            ),
+            DailyChallenge(
+                title = "Fusion Lab",
+                description = "Fuse 1 pair of creatures",
+                challengeType = ChallengeType.FUSE,
+                targetCount = 1,
+                rewardExperience = 120,
+                expirationDate = expiration
             )
         )
 
-        database.dailyChallengeDao().insertAll(challenges)
+        // Always include a CATCH_ANY and CATCH_TYPE, then one random from the rest
+        val fixed = pool.take(2)
+        val optional = pool.drop(2).shuffled().first()
+        database.dailyChallengeDao().insertAll(fixed + optional)
     }
 
-    private suspend fun updateCatchChallengeProgress(caughtType: GoopType) {
-        // Get all active incomplete challenges synchronously
+    private suspend fun updateChallengeProgress(type: ChallengeType, caughtType: GoopType? = null) {
         val activeChallenges = database.dailyChallengeDao().getActiveIncompleteChallengesSync()
 
         for (challenge in activeChallenges) {
             val shouldUpdate = when (challenge.challengeType) {
-                ChallengeType.CATCH_ANY -> true
-                ChallengeType.CATCH_TYPE -> challenge.targetType == caughtType
+                ChallengeType.CATCH_ANY -> type == ChallengeType.CATCH_ANY
+                ChallengeType.CATCH_TYPE -> type == ChallengeType.CATCH_TYPE && challenge.targetType == caughtType
+                ChallengeType.EVOLVE -> type == ChallengeType.EVOLVE
+                ChallengeType.FUSE -> type == ChallengeType.FUSE
                 else -> false
             }
 
@@ -275,25 +306,48 @@ class GameRepository(private val database: AppDatabase) {
                 if (newProgress >= challenge.targetCount) {
                     database.dailyChallengeDao().markCompleted(challenge.id)
                     database.playerStatsDao().addExperience(challenge.rewardExperience)
+                    checkAllChallengesBonus()
                 }
             }
         }
     }
 
+    private suspend fun updateCatchChallengeProgress(caughtType: GoopType) {
+        updateChallengeProgress(ChallengeType.CATCH_ANY)
+        updateChallengeProgress(ChallengeType.CATCH_TYPE, caughtType)
+    }
+
     private suspend fun updateEvolveChallengeProgress() {
-        val activeChallenges = database.dailyChallengeDao().getActiveIncompleteChallengesSync()
+        updateChallengeProgress(ChallengeType.EVOLVE)
+    }
 
-        for (challenge in activeChallenges) {
-            if (challenge.challengeType == ChallengeType.EVOLVE) {
-                val newProgress = challenge.currentProgress + 1
-                database.dailyChallengeDao().updateProgress(challenge.id, newProgress)
+    private suspend fun updateFuseChallengeProgress() {
+        updateChallengeProgress(ChallengeType.FUSE)
+    }
 
-                if (newProgress >= challenge.targetCount) {
-                    database.dailyChallengeDao().markCompleted(challenge.id)
-                    database.playerStatsDao().addExperience(challenge.rewardExperience)
-                }
+    /**
+     * Called when any challenge completes. If all 3 active challenges are now done,
+     * grant a bonus: 2 random base-type goops added straight to the collection.
+     * Returns true if the bonus was triggered so the UI can show a popup.
+     */
+    suspend fun checkAllChallengesBonus(): Boolean {
+        val totalActive = database.dailyChallengeDao().getActiveChallengeCount()
+        val totalCompleted = database.dailyChallengeDao().getCompletedActiveCount()
+        if (totalActive == 0 || totalCompleted < totalActive) return false
+
+        // Grant 2 random base goops
+        val basicTypes = GoopType.getBasicTypes()
+        repeat(2) {
+            val randomType = basicTypes.random()
+            val baseCreature = database.creatureDao().getBaseCreatureByType(randomType)
+            if (baseCreature != null) {
+                database.playerCreatureDao().insert(
+                    PlayerCreature(creatureId = baseCreature.id)
+                )
+                database.playerStatsDao().incrementTotalCaught()
             }
         }
+        return true
     }
 
     // Fusion recipe operations

@@ -64,9 +64,13 @@ class ChallengeAdapter : ListAdapter<DailyChallenge, ChallengeAdapter.ChallengeV
                     binding.challengeIcon.background = drawable
                 }
 
-            // Update progress bar color if completed
+            // Completed visual state
             if (challenge.isCompleted) {
                 binding.challengeProgress.progress = 100
+                binding.challengeRewardText.text = "Done!"
+                binding.root.alpha = 0.6f
+            } else {
+                binding.root.alpha = 1f
             }
         }
     }
