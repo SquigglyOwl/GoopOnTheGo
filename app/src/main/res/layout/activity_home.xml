@@ -22,7 +22,7 @@
             android:id="@+id/titleText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="PokeGoop"
+            android:text="GoopOnTheGo"
             android:textSize="28sp"
             android:textStyle="bold"
             android:textColor="#4FC3F7" />

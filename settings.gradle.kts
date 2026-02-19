@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "pokemonGoop"
+rootProject.name = "GoopOnTheGo"
 include(":app")
  
