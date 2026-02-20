@@ -193,6 +193,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:baselineAligned="false"
         android:padding="16dp"
         android:background="#16213e"
         app:layout_constraintBottom_toBottomOf="parent">
@@ -214,9 +215,13 @@
             android:layout_height="64dp"
             android:layout_weight="1"
             android:layout_marginHorizontal="4dp"
-            android:text="Collection"
-            android:textSize="12sp"
-            android:maxLines="1"
+            android:text="Collection&#10;(0)"
+            android:textSize="14sp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:textAlignment="center"
+            android:lineSpacingExtra="1dp"
             app:cornerRadius="16dp"
             app:backgroundTint="#81C784" />
 
