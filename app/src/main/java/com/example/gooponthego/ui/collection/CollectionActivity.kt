@@ -2,6 +2,8 @@ package com.example.gooponthego.ui.collection
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -39,6 +41,7 @@ class CollectionActivity : AppCompatActivity() {
     private var currentFilter: GoopType? = null
     private var showFavoritesOnly = false
     private var currentSortOption: SortOption = SortOption.DATE_CAUGHT
+    private var currentSearchQuery: String = ""
 
     private val repository by lazy {
         (application as GoopApplication).repository
@@ -141,6 +144,18 @@ class CollectionActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
+        // Setup search bar
+        binding.searchEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                currentSearchQuery = s?.toString() ?: ""
+                applyFilter()
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
         // Bottom buttons
         binding.releaseAllDuplicatesButton.setOnClickListener {
             binding.releaseAllDuplicatesButton.isEnabled = false
@@ -181,7 +196,10 @@ class CollectionActivity : AppCompatActivity() {
         val filtered = allCreatures.filter { details ->
             val typeMatch = currentFilter == null || details.creature.type == currentFilter
             val favoriteMatch = !showFavoritesOnly || details.playerCreature.isFavorite
-            typeMatch && favoriteMatch
+            val searchMatch = currentSearchQuery.isEmpty() ||
+                    details.creature.name.contains(currentSearchQuery, ignoreCase = true) ||
+                    details.playerCreature.nickname?.contains(currentSearchQuery, ignoreCase = true) == true
+            typeMatch && favoriteMatch && searchMatch
         }
 
         val sorted = when (currentSortOption) {
