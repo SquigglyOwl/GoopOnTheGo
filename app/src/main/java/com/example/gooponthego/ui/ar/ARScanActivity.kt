@@ -48,8 +48,8 @@ class ARScanActivity : AppCompatActivity() {
     private val COLOR_HOLD_TIME_MS = 2000L  // Hold on color for 2 seconds to spawn
 
     // Catch attempts
-    private var catchAttemptsRemaining = 5
-    private val MAX_CATCH_ATTEMPTS = 5
+    private var catchAttemptsRemaining = 3
+    private val MAX_CATCH_ATTEMPTS = 3
 
     private val repository by lazy {
         (application as GoopApplication).repository
@@ -316,12 +316,12 @@ class ARScanActivity : AppCompatActivity() {
 
     private fun getCatchRate(rarity: Int): Int {
         return when (rarity) {
-            1 -> 70
-            2 -> 55
-            3 -> 40
-            4 -> 25
-            5 -> 15
-            else -> 50
+            1 -> 50
+            2 -> 35
+            3 -> 25
+            4 -> 15
+            5 -> 8
+            else -> 35
         }
     }
 

@@ -88,7 +88,7 @@ class HomeActivity : AppCompatActivity() {
         // Show owned creature count inside Collection button
         lifecycleScope.launch {
             repository.getAllPlayerCreatures().collectLatest { creatures ->
-                binding.collectionButton.text = "Collection\n(${creatures.size})"
+                binding.collectionButton.text = "Collection (${creatures.size})"
             }
         }
 

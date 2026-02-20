@@ -78,9 +78,6 @@ dependencies {
     implementation(libs.navigation.fragment.ktx)
     implementation(libs.navigation.ui.ktx)
 
-    // ML Kit (for object recognition)
-    implementation(libs.mlkit.image.labeling)
-
     // RecyclerView & CardView
     implementation(libs.recyclerview)
     implementation(libs.cardview)

@@ -175,7 +175,9 @@ class GameRepository(private val database: AppDatabase) {
         val daysDiff = if (thisYear == lastLoginYear) {
             today - lastLoginDay
         } else {
-            1
+            // Cross-year: calculate actual days difference using milliseconds
+            val msPerDay = 24 * 60 * 60 * 1000L
+            ((now - lastLogin) / msPerDay).toInt()
         }
 
         val newStreak = when {

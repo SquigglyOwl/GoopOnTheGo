@@ -180,6 +180,10 @@ class CollectionActivity : AppCompatActivity() {
         binding.fusionButton.setOnClickListener {
             startActivity(Intent(this, FusionActivity::class.java))
         }
+
+        binding.goopdexButton.setOnClickListener {
+            startActivity(Intent(this, GoopdexActivity::class.java))
+        }
     }
 
     private fun observeData() {

@@ -1,5 +1,7 @@
 package com.example.gooponthego.ui.evolution
 
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -17,6 +19,7 @@ import com.example.gooponthego.databinding.ActivityFusionBinding
 import com.example.gooponthego.models.GoopType
 import com.example.gooponthego.ui.collection.CreatureAdapter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -218,36 +221,85 @@ class FusionActivity : AppCompatActivity() {
 
         binding.fuseButton.isEnabled = false
 
-        lifecycleScope.launch {
-            val result = repository.fuseCreatures(s1.playerCreature.id, s2.playerCreature.id)
+        playFusionAnimation {
+            lifecycleScope.launch {
+                val result = repository.fuseCreatures(s1.playerCreature.id, s2.playerCreature.id)
 
-            withContext(Dispatchers.Main) {
-                if (result != null) {
-                    Toast.makeText(
-                        this@FusionActivity,
-                        "Fusion successful! Created ${fusionResult?.name}!",
-                        Toast.LENGTH_LONG
-                    ).show()
+                withContext(Dispatchers.Main) {
+                    if (result != null) {
+                        // Flash the result card in
+                        binding.resultCard.alpha = 0f
+                        binding.resultCard.scaleX = 0.5f
+                        binding.resultCard.scaleY = 0.5f
+                        AnimatorSet().apply {
+                            playTogether(
+                                ObjectAnimator.ofFloat(binding.resultCard, View.ALPHA, 0f, 1f),
+                                ObjectAnimator.ofFloat(binding.resultCard, View.SCALE_X, 0.5f, 1f),
+                                ObjectAnimator.ofFloat(binding.resultCard, View.SCALE_Y, 0.5f, 1f)
+                            )
+                            duration = 400
+                            start()
+                        }
 
-                    // Reset slots
-                    slot1Creature = null
-                    slot2Creature = null
-                    fusionResult = null
+                        Toast.makeText(
+                            this@FusionActivity,
+                            "Fusion successful! Created ${fusionResult?.name}!",
+                            Toast.LENGTH_LONG
+                        ).show()
 
-                    binding.slot1Visual.visibility = View.INVISIBLE
-                    binding.slot1Text.text = "Tap to select"
-                    binding.slot2Visual.visibility = View.INVISIBLE
-                    binding.slot2Text.text = "Tap to select"
-                    binding.resultCard.visibility = View.GONE
-                    binding.fuseButton.isEnabled = false
-                } else {
-                    Toast.makeText(
-                        this@FusionActivity,
-                        "Fusion failed",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    binding.fuseButton.isEnabled = true
+                        // Reset slots
+                        slot1Creature = null
+                        slot2Creature = null
+                        fusionResult = null
+
+                        binding.slot1Visual.visibility = View.INVISIBLE
+                        binding.slot1Text.text = "Tap to select"
+                        binding.slot2Visual.visibility = View.INVISIBLE
+                        binding.slot2Text.text = "Tap to select"
+                        binding.resultCard.visibility = View.GONE
+                        binding.fuseButton.isEnabled = false
+                    } else {
+                        // Restore slots on failure
+                        binding.slot1Card.alpha = 1f
+                        binding.slot2Card.alpha = 1f
+                        Toast.makeText(
+                            this@FusionActivity,
+                            "Fusion failed",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        binding.fuseButton.isEnabled = true
+                    }
                 }
+            }
+        }
+    }
+
+    private fun playFusionAnimation(onComplete: () -> Unit) {
+        // Both slots scale down and fade out toward centre
+        val slot1ScaleX = ObjectAnimator.ofFloat(binding.slot1Card, View.SCALE_X, 1f, 0f)
+        val slot1ScaleY = ObjectAnimator.ofFloat(binding.slot1Card, View.SCALE_Y, 1f, 0f)
+        val slot1Fade   = ObjectAnimator.ofFloat(binding.slot1Card, View.ALPHA, 1f, 0f)
+        val slot2ScaleX = ObjectAnimator.ofFloat(binding.slot2Card, View.SCALE_X, 1f, 0f)
+        val slot2ScaleY = ObjectAnimator.ofFloat(binding.slot2Card, View.SCALE_Y, 1f, 0f)
+        val slot2Fade   = ObjectAnimator.ofFloat(binding.slot2Card, View.ALPHA, 1f, 0f)
+
+        AnimatorSet().apply {
+            playTogether(slot1ScaleX, slot1ScaleY, slot1Fade, slot2ScaleX, slot2ScaleY, slot2Fade)
+            duration = 500
+            start()
+        }
+
+        lifecycleScope.launch {
+            delay(500)
+            withContext(Dispatchers.Main) {
+                // Restore slot cards for next use
+                binding.slot1Card.scaleX = 1f
+                binding.slot1Card.scaleY = 1f
+                binding.slot1Card.alpha  = 1f
+                binding.slot2Card.scaleX = 1f
+                binding.slot2Card.scaleY = 1f
+                binding.slot2Card.alpha  = 1f
+                onComplete()
             }
         }
     }
