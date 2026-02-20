@@ -85,6 +85,20 @@ class GameRepository(private val database: AppDatabase) {
         return database.playerCreatureDao().getCountByCreatureId(creatureId)
     }
 
+    suspend fun releaseAllDuplicates(): Int {
+        val allCreatures = database.playerCreatureDao().getAllPlayerCreaturesWithDetailsSync()
+        val grouped = allCreatures.groupBy { it.creature.id }
+        var released = 0
+        for ((_, group) in grouped) {
+            if (group.size > 3) {
+                val toRelease = group.drop(3)
+                toRelease.forEach { database.playerCreatureDao().delete(it.playerCreature) }
+                released += toRelease.size
+            }
+        }
+        return released
+    }
+
     suspend fun fuseCreatures(
         playerCreature1Id: Long,
         playerCreature2Id: Long
