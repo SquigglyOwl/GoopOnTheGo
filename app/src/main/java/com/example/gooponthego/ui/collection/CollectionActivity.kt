@@ -3,6 +3,8 @@ package com.example.gooponthego.ui.collection
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -19,6 +21,12 @@ import com.example.gooponthego.ui.evolution.FusionActivity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+enum class SortOption(val displayName: String) {
+    NAME("Name"),
+    RARITY("Rarity"),
+    DATE_CAUGHT("Date Caught")
+}
+
 class CollectionActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityCollectionBinding
@@ -27,6 +35,7 @@ class CollectionActivity : AppCompatActivity() {
     private var allCreatures: List<PlayerCreatureWithDetails> = emptyList()
     private var currentFilter: GoopType? = null
     private var showFavoritesOnly = false
+    private var currentSortOption: SortOption = SortOption.DATE_CAUGHT
 
     private val repository by lazy {
         (application as GoopApplication).repository
@@ -110,6 +119,25 @@ class CollectionActivity : AppCompatActivity() {
             applyFilter()
         }
 
+        // Setup sort spinner
+        val sortAdapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            SortOption.entries.map { it.displayName }
+        ).apply {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
+        binding.sortSpinner.adapter = sortAdapter
+        binding.sortSpinner.setSelection(SortOption.entries.indexOf(currentSortOption))
+        binding.sortSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                currentSortOption = SortOption.entries[position]
+                applyFilter()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
         // Bottom buttons
         binding.evolutionButton.setOnClickListener {
             startActivity(Intent(this, EvolutionActivity::class.java))
@@ -136,11 +164,18 @@ class CollectionActivity : AppCompatActivity() {
             val favoriteMatch = !showFavoritesOnly || details.playerCreature.isFavorite
             typeMatch && favoriteMatch
         }
-        creatureAdapter.submitList(filtered)
+
+        val sorted = when (currentSortOption) {
+            SortOption.NAME -> filtered.sortedBy { it.creature.name.lowercase() }
+            SortOption.RARITY -> filtered.sortedByDescending { it.creature.rarity }
+            SortOption.DATE_CAUGHT -> filtered.sortedByDescending { it.playerCreature.caughtDate }
+        }
+
+        creatureAdapter.submitList(sorted)
 
         // Show/hide empty state
-        binding.emptyStateLayout.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
-        binding.collectionRecyclerView.visibility = if (filtered.isEmpty()) View.GONE else View.VISIBLE
+        binding.emptyStateLayout.visibility = if (sorted.isEmpty()) View.VISIBLE else View.GONE
+        binding.collectionRecyclerView.visibility = if (sorted.isEmpty()) View.GONE else View.VISIBLE
     }
 
     private fun updateUI(creatures: List<PlayerCreatureWithDetails>) {

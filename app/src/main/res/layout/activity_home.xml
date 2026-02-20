@@ -202,7 +202,7 @@
             android:layout_width="0dp"
             android:layout_height="64dp"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="4dp"
             android:text="Scan"
             android:textSize="14sp"
             app:cornerRadius="16dp"
@@ -215,7 +215,8 @@
             android:layout_weight="1"
             android:layout_marginHorizontal="4dp"
             android:text="Collection"
-            android:textSize="14sp"
+            android:textSize="12sp"
+            android:maxLines="1"
             app:cornerRadius="16dp"
             app:backgroundTint="#81C784" />
 
@@ -224,7 +225,7 @@
             android:layout_width="0dp"
             android:layout_height="64dp"
             android:layout_weight="1"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="4dp"
             android:text="Map"
             android:textSize="14sp"
             app:cornerRadius="16dp"
