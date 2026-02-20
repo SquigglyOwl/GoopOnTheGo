@@ -32,6 +32,10 @@ interface PlayerCreatureDao {
     @Query("SELECT * FROM player_creatures ORDER BY caughtDate DESC")
     fun getAllPlayerCreaturesWithDetails(): Flow<List<PlayerCreatureWithDetails>>
 
+    @Transaction
+    @Query("SELECT * FROM player_creatures ORDER BY caughtDate DESC")
+    suspend fun getAllPlayerCreaturesWithDetailsSync(): List<PlayerCreatureWithDetails>
+
     @Query("SELECT * FROM player_creatures WHERE id = :id")
     suspend fun getPlayerCreatureById(id: Long): PlayerCreature?
 

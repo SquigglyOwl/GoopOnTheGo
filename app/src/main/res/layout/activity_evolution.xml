@@ -70,7 +70,7 @@
         android:visibility="gone"
         app:cardBackgroundColor="#0f3460"
         app:cardCornerRadius="16dp"
-        app:layout_constraintBottom_toTopOf="@id/evolveButton"
+        app:layout_constraintBottom_toTopOf="@id/releaseAllDuplicatesButton"
         tools:visibility="visible">
 
         <LinearLayout
@@ -138,6 +138,19 @@
             </LinearLayout>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
+
+    <!-- Release All Duplicates Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/releaseAllDuplicatesButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="4dp"
+        android:text="Release All Duplicates"
+        app:cornerRadius="12dp"
+        app:backgroundTint="#E57373"
+        app:layout_constraintBottom_toTopOf="@id/evolveButton" />
 
     <!-- Evolve Button -->
     <com.google.android.material.button.MaterialButton

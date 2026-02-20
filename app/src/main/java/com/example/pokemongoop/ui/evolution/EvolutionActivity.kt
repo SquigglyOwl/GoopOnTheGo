@@ -68,6 +68,10 @@ class EvolutionActivity : AppCompatActivity() {
         binding.evolveButton.setOnClickListener {
             performEvolution()
         }
+
+        binding.releaseAllDuplicatesButton.setOnClickListener {
+            releaseAllDuplicates()
+        }
     }
 
     private fun observeData() {
@@ -157,6 +161,22 @@ class EvolutionActivity : AppCompatActivity() {
                         binding.evolveButton.isEnabled = true
                     }
                 }
+            }
+        }
+    }
+
+    private fun releaseAllDuplicates() {
+        binding.releaseAllDuplicatesButton.isEnabled = false
+        lifecycleScope.launch {
+            val released = repository.releaseAllDuplicates()
+            withContext(Dispatchers.Main) {
+                binding.releaseAllDuplicatesButton.isEnabled = true
+                val message = if (released > 0) {
+                    "Released $released duplicate creature${if (released != 1) "s" else ""}!"
+                } else {
+                    "No duplicates to release (max 3 per species kept)"
+                }
+                Toast.makeText(this@EvolutionActivity, message, Toast.LENGTH_LONG).show()
             }
         }
     }
