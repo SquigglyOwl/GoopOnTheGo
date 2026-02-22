@@ -279,7 +279,13 @@ class ARScanActivity : AppCompatActivity() {
 
     private fun spawnCreatureOfType(type: GoopType) {
         lifecycleScope.launch {
-            val creature = repository.getBaseCreatureByType(type)
+            val stage = rollSpawnStage(type)
+            val creature = if (stage == 1) {
+                repository.getBaseCreatureByType(type)
+            } else {
+                repository.getCreatureByTypeAndStage(type, stage)
+                    ?: repository.getBaseCreatureByType(type) // fallback if stage doesn't exist
+            }
             withContext(Dispatchers.Main) {
                 if (creature != null) {
                     showCreature(creature)
@@ -290,9 +296,28 @@ class ARScanActivity : AppCompatActivity() {
         }
     }
 
+    private fun rollSpawnStage(type: GoopType): Int {
+        val habitatMatch = isHabitatMatch(type)
+        val roll = Random.nextFloat()
+        return when {
+            habitatMatch -> when {
+                roll < 0.10f -> 3   // 10% level 3 in matching habitat
+                roll < 0.35f -> 2   // 25% level 2 in matching habitat
+                else         -> 1   // 65% level 1
+            }
+            else -> when {
+                roll < 0.04f -> 3   // 4% level 3 anywhere
+                roll < 0.16f -> 2   // 12% level 2 anywhere
+                else         -> 1   // 84% level 1
+            }
+        }
+    }
+
     private fun showCreature(creature: Creature) {
         catchAttemptsRemaining = MAX_CATCH_ATTEMPTS
 
+        val match = isHabitatMatch(creature.type)
+        binding.arOverlay.setHabitatMatch(match)
         binding.arOverlay.showCreature(creature)
         binding.scanningIndicator.visibility = View.GONE
 
@@ -309,20 +334,33 @@ class ARScanActivity : AppCompatActivity() {
     }
 
     private fun updateCatchStatus(creature: Creature) {
-        val catchRate = getCatchRate(creature.rarity)
-        binding.scanStatusText.text = "Tap to catch! ($catchRate% per tap) - $catchAttemptsRemaining tries left"
+        val catchRate = getCatchRate(creature.rarity, creature.type)
+        val habitatBonus = isHabitatMatch(creature.type)
+        val bonusText = if (habitatBonus) " +Habitat Bonus!" else ""
+        binding.scanStatusText.text = "Tap to catch! ($catchRate% per tap) - $catchAttemptsRemaining tries left$bonusText"
         binding.scanStatusText.setTextColor(creature.type.primaryColor)
     }
 
-    private fun getCatchRate(rarity: Int): Int {
-        return when (rarity) {
-            1 -> 50
-            2 -> 35
-            3 -> 25
-            4 -> 15
-            5 -> 8
-            else -> 35
+    private fun getCatchRate(rarity: Int, creatureType: GoopType? = null): Int {
+        val base = when (rarity) {
+            1 -> 55   // Common
+            2 -> 40   // Uncommon
+            3 -> 28   // Rare
+            4 -> 18   // Epic
+            5 -> 10   // Legendary
+            else -> 40
         }
+        return if (creatureType != null && isHabitatMatch(creatureType)) {
+            (base + 15).coerceAtMost(95)
+        } else {
+            base
+        }
+    }
+
+    private fun isHabitatMatch(creatureType: GoopType): Boolean {
+        val lat = currentLatitude ?: return false
+        val lng = currentLongitude ?: return false
+        return detectHabitat(lat, lng) == creatureType
     }
 
     private fun getRarityText(rarity: Int): String {
