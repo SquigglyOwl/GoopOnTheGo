@@ -15,6 +15,7 @@ import com.example.gooponthego.data.database.entities.DailyChallenge
 import com.example.gooponthego.databinding.ActivityHomeBinding
 import com.example.gooponthego.ui.ar.ARScanActivity
 import com.example.gooponthego.ui.collection.CollectionActivity
+import com.example.gooponthego.ui.achievements.AchievementsActivity
 import com.example.gooponthego.ui.map.HabitatMapActivity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -68,6 +69,10 @@ class HomeActivity : AppCompatActivity() {
 
         binding.mapButton.setOnClickListener {
             startActivity(Intent(this, HabitatMapActivity::class.java))
+        }
+
+        binding.achievementsButton.setOnClickListener {
+            startActivity(Intent(this, AchievementsActivity::class.java))
         }
     }
 

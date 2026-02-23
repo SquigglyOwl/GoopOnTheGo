@@ -40,6 +40,7 @@ class GameRepository(private val database: AppDatabase) {
         val id = database.playerCreatureDao().insert(playerCreature)
         database.playerStatsDao().incrementTotalCaught()
         database.playerStatsDao().addExperience(25)
+        database.creatureDao().markDiscovered(creatureId)
         updateCatchAchievements()
 
         // Update daily challenge progress
@@ -75,6 +76,7 @@ class GameRepository(private val database: AppDatabase) {
             val newId = database.playerCreatureDao().insert(evolvedCreature)
             database.playerStatsDao().incrementTotalEvolved()
             database.playerStatsDao().addExperience(50)
+            database.creatureDao().markDiscovered(evolution.id)
             updateEvolutionAchievements()
             updateEvolveChallengeProgress()
             return evolvedCreature.copy(id = newId)
@@ -127,6 +129,7 @@ class GameRepository(private val database: AppDatabase) {
 
         // Mark recipe as discovered
         database.fusionRecipeDao().markDiscovered(recipe.id)
+        database.creatureDao().markDiscovered(recipe.resultCreatureId)
 
         database.playerStatsDao().incrementTotalFused()
         database.playerStatsDao().addExperience(75)

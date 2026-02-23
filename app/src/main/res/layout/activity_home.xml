@@ -51,6 +51,16 @@
                 android:text="Level 1"
                 android:textSize="16sp"
                 android:textColor="#FFD54F" />
+
+            <ImageButton
+                android:id="@+id/achievementsButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="12dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/star_big_on"
+                android:contentDescription="Achievements"
+                app:tint="#FFD54F" />
         </LinearLayout>
 
     </LinearLayout>

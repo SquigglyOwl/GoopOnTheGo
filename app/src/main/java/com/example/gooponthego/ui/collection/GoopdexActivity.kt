@@ -46,25 +46,20 @@ class GoopdexActivity : AppCompatActivity() {
 
     private fun observeData() {
         lifecycleScope.launch {
-            // Observe all base creatures and player's current collection simultaneously
+            // isDiscovered is stored persistently on the creature — never resets on evolve/fuse
             repository.getAllCreatures().collectLatest { allCreatures ->
-                repository.getAllPlayerCreaturesWithDetails().collectLatest { owned ->
-                    // Build set of discovered creature IDs (owned at least one)
-                    val discoveredIds = owned.map { it.creature.id }.toSet()
+                val entries = allCreatures
+                    .sortedBy { it.id }
+                    .map { creature ->
+                        GoopdexEntry(
+                            creature = creature,
+                            discovered = creature.isDiscovered
+                        )
+                    }
 
-                    val entries = allCreatures
-                        .sortedBy { it.id }
-                        .map { creature ->
-                            GoopdexEntry(
-                                creature = creature,
-                                discovered = creature.id in discoveredIds
-                            )
-                        }
-
-                    val discovered = entries.count { it.discovered }
-                    binding.progressText.text = "$discovered / ${allCreatures.size}"
-                    goopdexAdapter.submitList(entries)
-                }
+                val discovered = entries.count { it.discovered }
+                binding.progressText.text = "$discovered / ${allCreatures.size}"
+                goopdexAdapter.submitList(entries)
             }
         }
     }

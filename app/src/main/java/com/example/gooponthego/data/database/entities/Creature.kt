@@ -19,5 +19,6 @@ data class Creature(
     val evolvesToId: Long? = null,
     val experienceToEvolve: Int,
     val description: String,
-    val imageResName: String? = null // drawable resource name (e.g., "droplet_goop")
+    val imageResName: String? = null, // drawable resource name (e.g., "droplet_goop")
+    val isDiscovered: Boolean = false  // true once the player has ever caught/obtained this creature
 )

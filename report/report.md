@@ -7,10 +7,10 @@ date: "February 2026"
 # Team Information
 
 | Edwin Lee Zirui — 2301299 |
-| *(Name) — (SIT ID)* |
-| *(Name) — (SIT ID)* |
-| *(Name) — (SIT ID)* |
-| *(Name) — (SIT ID)* |
+| Jeremy Lim Ting Jie — 2301370 |
+| Hurng Kai Rui — 2301278 |
+| Muhammad Nur Aqif Bin Abdemanaf — 2301453 |
+| Mohamed Ridhwan Bin Mohamed Afandi — 2301367 |
 | GitHub Repository | *(link)* |
 | App Demo Video | *(link)* |
 | Presentation Video | *(link)* |
@@ -46,6 +46,7 @@ Camera Scan → Colour Detected → Creature Spawns → Tap to Catch → Collect
 | Daily Challenges | Time-limited objectives refreshed each midnight |
 | Achievements | 10 persistent achievements across 5 categories |
 | Login Streaks | Consecutive daily login tracking |
+| Goopdex | Encyclopedia showing all 19 creatures — silhouette until caught, full details once discovered |
 
 ---
 
@@ -89,13 +90,14 @@ The app follows an **MVVM-adjacent architecture** using the Repository pattern w
 
 ```
 HomeActivity  (launcher)
-  +-- ARScanActivity          (camera + catch)
-  +-- CollectionActivity      (creature inventory)
+  +-- ARScanActivity          (camera + catch)         [Scan button]
+  +-- CollectionActivity      (creature inventory)     [Collection button]
   |     +-- CreatureDetailActivity
   |     +-- EvolutionActivity
   |     +-- FusionActivity
-  +-- HabitatMapActivity      (GPS map)
-  +-- AchievementsActivity
+  |     +-- GoopdexActivity   (creature encyclopedia)  [Goopdex button]
+  +-- HabitatMapActivity      (GPS map)                [Map button]
+  +-- AchievementsActivity                             [★ header icon]
 ```
 
 ## Activities Overview
@@ -109,7 +111,8 @@ HomeActivity  (launcher)
 | `EvolutionActivity` | Lists all creatures with 3+ copies ready to merge-evolve; shows creature images in preview |
 | `FusionActivity` | Two-slot selection for type fusion |
 | `HabitatMapActivity` | Live GPS tracking, habitat zone detection |
-| `AchievementsActivity` | Achievement list with progress bars |
+| `AchievementsActivity` | Achievement list with progress bars — accessible via star icon button in HomeActivity header |
+| `GoopdexActivity` | Encyclopedia of all 19 Goops — silhouette for undiscovered, full image for discovered; discovery is persistent |
 
 ---
 
@@ -147,6 +150,7 @@ player_stats  (singleton, id = 1)
 | experienceToEvolve | INT | NOT NULL | XP threshold |
 | description | STRING | NOT NULL | Dex entry text |
 | imageResName | STRING | NULLABLE | Drawable resource name |
+| isDiscovered | BOOLEAN | DEFAULT false | Set to true permanently once the player catches, evolves to, or fuses this creature |
 
 ### player_creatures — Player's caught creature instances
 
@@ -345,13 +349,13 @@ Tap detection computes Euclidean distance from the touch point to the creature's
 
 | Rarity | Stars | Catch Rate |
 |--------|-------|-----------|
-| Common | 1 star | 70% |
-| Uncommon | 2 stars | 55% |
-| Rare | 3 stars | 40% |
-| Epic | 4 stars | 25% |
-| Legendary | 5 stars | 15% |
+| Common | 1 star | 50% |
+| Uncommon | 2 stars | 35% |
+| Rare | 3 stars | 25% |
+| Epic | 4 stars | 15% |
+| Legendary | 5 stars | 8% |
 
-`Random.nextFloat() < catchRate` determines success or failure.
+`Random.nextFloat() < catchRate` determines success or failure. Players have a maximum of **3 attempts** before the creature escapes, making each throw meaningful.
 
 ## 5.7 Creature Type System — GoopType.kt
 
@@ -418,6 +422,24 @@ return when (hash % 10) {
 ```
 
 The hash is **deterministic** — the same real-world location always produces the same habitat type, creating a consistent geographic distribution of creature spawning zones.
+
+## 5.11 Goopdex — Persistent Discovery System
+
+The Goopdex (`GoopdexActivity`) shows all 19 creatures in a 3-column grid. Undiscovered creatures display a black silhouette with "???" for name and type. Discovered creatures show their full colour image, name, and type.
+
+Discovery is stored as `isDiscovered: Boolean` on the `Creature` entity itself — a permanent flag that is **never reset**. It is set to `true` by `GameRepository` in three places:
+
+| Event | Action |
+|-------|--------|
+| `catchCreature()` | Marks the caught creature's base entry |
+| `evolveCreature()` | Marks the evolved-stage creature when created |
+| `fuseCreatures()` | Marks the fusion result creature when created |
+
+This means if a player catches Droplet Goop, evolves all 3 copies into Aqua Goop, and then fuses Aqua Goop away — Droplet Goop, Aqua Goop, and Steam Goop all remain shown in the Goopdex permanently, even though none are currently in the collection.
+
+The silhouette effect is applied via a `ColorMatrix` that zeroes out all RGB channels while preserving the alpha channel, producing a pure black fill over the original image shape.
+
+The Goopdex is accessible from the **Collection screen** via the "Goopdex" button, and the header shows a live progress counter (e.g. "7 / 19").
 
 ---
 
@@ -541,29 +563,32 @@ SELECT * FROM creatures WHERE type = :type AND evolutionStage = 1
 
 ## 7.1 Version Control
 
-- **17 commits** on `master` with descriptive messages tracking incremental feature development
-- **Feature branch workflow:** `feature/unit-tests` and `jeremy` branches merged via **2 pull requests**
+- **15 pull requests** merged into `master` across branches: `edwin`, `jeremy`, `kairui`, `aqif`, `Ridhwan`, `feature/unit-tests`, `report`
+- Feature branch workflow — each team member worked on a named branch and submitted a PR for review
 - Commit history demonstrates iterative, working-at-every-stage development
 
-**Commit History:**
+**Selected Commit History:**
 
-| Hash | Message |
-|------|---------|
-| a52ec83 | pokemonGOOP in progress |
-| 5a162be | Add sustained colour scanning for creature spawning |
-| 479fc1b | Add tap-to-catch mechanic with success/fail chance |
-| 9fe907c | Add escape timer — creatures flee after 6 seconds |
-| edcae87 | Revamp AR scanning: random spawns, multi-tap catch, arrow indicator |
-| 0b4b890 | Simplify AR scanning — remove rotation sensor complexity |
-| 2fd4989 | Add colour-based AR scanning and fix daily challenge tracking |
-| 2a00f92 | Add merge-to-evolve system and fix daily challenge display |
-| c5f34be | Add custom creature images and fix database migration |
-| 588f7ba | Add GitHub Actions CI/CD workflow |
-| d27aaa9 | Unit tests |
-| d20fbd6 | Merge pull request #2 from SquigglyOwl/jeremy |
-| a7b3701 | Rename app from PokeGoop/PokemonGoop to GoopOnTheGo |
-| 04a83b0 | Renamed mobile game name |
-| c0f8db8 | Fix EvolutionActivity to show creatures with 3+ copies; use creature images in evolution preview |
+| Hash | Author | Message |
+|------|--------|---------|
+| a52ec83 | Edwin | pokemonGOOP in progress |
+| 5a162be | Edwin | Add sustained colour scanning for creature spawning |
+| 479fc1b | Edwin | Add tap-to-catch mechanic with success/fail chance |
+| 9fe907c | Edwin | Add escape timer — creatures flee after 6 seconds |
+| edcae87 | Edwin | Revamp AR scanning: random spawns, multi-tap catch, arrow indicator |
+| 2fd4989 | Edwin | Add colour-based AR scanning and fix daily challenge tracking |
+| 2a00f92 | Edwin | Add merge-to-evolve system and fix daily challenge display |
+| c5f34be | Edwin | Add custom creature images and fix database migration |
+| 588f7ba | Edwin | Add GitHub Actions CI/CD workflow |
+| d27aaa9 | Edwin | Unit tests |
+| 9011cbd | Jeremy | UI: add gradient header, icons, and theme colors |
+| a6f4cb1 | Jeremy | Release all duplicate feature implemented v1.0 |
+| 700da8f | Jeremy | Made button more accessible and convenient |
+| 83b5a92 | Kai Rui | Add confirmation dialog before releasing a creature and show caught location |
+| e1c7f10 | Aqif | Search bar — task 1 done |
+| 6268133 | Aqif | Add search bar and integrate search filter |
+| 63caf9e | Ridhwan | Add creature count to Collection button on HomeActivity |
+| b2358c8 | Edwin | Fix streak counter, added Goopdex |
 
 ## 7.2 CI/CD — GitHub Actions
 
@@ -616,7 +641,6 @@ All third-party libraries are listed below as required. No library was used to i
 | androidx.lifecycle.viewmodel.ktx | Lifecycle-aware ViewModel scope |
 | androidx.lifecycle.livedata.ktx | LiveData |
 | androidx.lifecycle.runtime.ktx | lifecycleScope coroutine support |
-| com.google.mlkit:image-labeling | ML Kit (declared; available for future extension) |
 | androidx.recyclerview | Scrollable list and grid displays |
 | com.google.android.material | Material Design UI components |
 | androidx.cardview | Card layout containers |
@@ -668,6 +692,10 @@ AI tools were used during this project as declared below:
 | Room database (6 tables, seeded on first launch) | Complete |
 | GitHub Actions CI/CD pipeline | Complete |
 | Unit tests (3 test classes) | Complete |
+| Goopdex encyclopedia (silhouette / persistent discovery) | Complete |
+| GPS habitat zone stability (geohash 0.01° = ~1.1 km grid) | Complete |
+| Fusion animation (slot cards shrink/fade, result pops in) | Complete |
+| Achievements screen accessible from HomeActivity header | Complete |
 
 ## Mobile Features Summary (Requirement: 3+)
 
@@ -690,10 +718,23 @@ AI tools were used during this project as declared below:
 
 ---
 
-# 11. Links
+# 11. Team Contributions
+
+| Member | Contributions |
+|--------|--------------|
+| Edwin Lee Zirui (2301299) | Core game architecture, AR camera pipeline and colour detection CV algorithm, catch mechanic, evolution and fusion systems, Room database design and seeding, GPS habitat mapping, daily challenges, achievement system, login streak, Goopdex with persistent discovery, achievements header button, CI/CD pipeline, unit tests |
+| Jeremy Lim Ting Jie (2301370) | UI overhaul — gradient header drawable, vector nav icons (scan, collection, map, back), card elevation and item layout polish across all screens, colour palette in colors.xml, light/night theme tokens; released all duplicates feature (v1.0) with DAO query and repository logic; moved release button from EvolutionActivity to CollectionActivity for better accessibility |
+| Hurng Kai Rui (2301278) | Confirmation dialog before releasing a creature (with 3-second cooldown timer on the release button); display of caught location on CreatureDetailActivity (shows GPS coordinates or habitat zone name if GPS was unavailable) |
+| Muhammad Nur Aqif Bin Abdemanaf (2301453) | Search bar on Collection screen — TextInputEditText with real-time TextWatcher filtering creatures by name and nickname (case-insensitive); sort dropdown positioned below search bar |
+| Mohamed Ridhwan Bin Mohamed Afandi (2301367) | Live creature count on the Collection button in HomeActivity (e.g. "Collection (5)"); sort Collection dropdown (by name, rarity, date caught) |
+
+---
+
+# 12. Links
 
 | Resource | URL |
 |----------|-----|
-| Source Code (GitHub) | *(paste GitHub repo link)* |
+| Source Code (GitHub) | https://github.com/SquigglyOwl/GoopOnTheGo |
 | App Demo Video | *(paste demo video link)* |
 | Presentation Video | *(paste presentation video link)* |
+
