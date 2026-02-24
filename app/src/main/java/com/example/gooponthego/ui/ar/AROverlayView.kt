@@ -29,6 +29,7 @@ class AROverlayView @JvmOverloads constructor(
     private var bounceOffset = 0f
     private var glowRadius = 0f
     private var isAnimating = false
+    private var habitatMatch = false
 
     // Tap-to-catch listener
     var onCreatureTapped: ((Creature, Boolean) -> Unit)? = null
@@ -43,10 +44,6 @@ class AROverlayView @JvmOverloads constructor(
     }
     private val pupilPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.BLACK
-    }
-    private val arrowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.WHITE
-        style = Paint.Style.FILL
     }
 
     private var bounceAnimator: ValueAnimator? = null
@@ -101,6 +98,10 @@ class AROverlayView @JvmOverloads constructor(
 
     fun getCreature(): Creature? = creature
 
+    fun setHabitatMatch(match: Boolean) {
+        habitatMatch = match
+    }
+
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (event.action == MotionEvent.ACTION_DOWN && creature != null) {
             val touchX = event.x
@@ -117,15 +118,17 @@ class AROverlayView @JvmOverloads constructor(
 
             if (distance <= tapRadius) {
                 creature?.let { c ->
-                    // Calculate catch success based on rarity
-                    val catchRate = when (c.rarity) {
-                        1 -> 0.70f  // Common
-                        2 -> 0.55f  // Uncommon
-                        3 -> 0.40f  // Rare
-                        4 -> 0.25f  // Epic
-                        5 -> 0.15f  // Legendary
-                        else -> 0.50f
+                    // Base catch rate by rarity
+                    val baseCatchRate = when (c.rarity) {
+                        1 -> 0.55f  // Common
+                        2 -> 0.40f  // Uncommon
+                        3 -> 0.28f  // Rare
+                        4 -> 0.18f  // Epic
+                        5 -> 0.10f  // Legendary
+                        else -> 0.40f
                     }
+                    // +15% bonus when creature type matches current habitat
+                    val catchRate = if (habitatMatch) (baseCatchRate + 0.15f).coerceAtMost(0.95f) else baseCatchRate
 
                     val success = Random.nextFloat() < catchRate
                     onCreatureTapped?.invoke(c, success)
@@ -181,9 +184,6 @@ class AROverlayView @JvmOverloads constructor(
             val centerX = creatureX
             val centerY = creatureY - bounceOffset
 
-            // Draw arrow pointing to creature (helps locate it)
-            drawArrowToCreature(canvas, centerX, centerY, c.type)
-
             // Draw glow effect
             glowPaint.maskFilter = BlurMaskFilter(glowRadius + 20f, BlurMaskFilter.Blur.NORMAL)
             canvas.drawCircle(centerX, centerY, creatureSize / 2 + glowRadius, glowPaint)
@@ -206,50 +206,6 @@ class AROverlayView @JvmOverloads constructor(
         }
     }
 
-    private fun drawArrowToCreature(canvas: Canvas, creatureX: Float, creatureY: Float, type: GoopType) {
-        // Draw arrow from top of screen pointing down to creature
-        val arrowStartX = creatureX
-        val arrowStartY = 80f
-
-        // Only draw if creature is not at the very top
-        if (creatureY > 200f) {
-            val path = Path().apply {
-                moveTo(arrowStartX, arrowStartY)
-                lineTo(arrowStartX - 25f, arrowStartY - 40f)
-                lineTo(arrowStartX - 10f, arrowStartY - 40f)
-                lineTo(arrowStartX - 10f, arrowStartY - 80f)
-                lineTo(arrowStartX + 10f, arrowStartY - 80f)
-                lineTo(arrowStartX + 10f, arrowStartY - 40f)
-                lineTo(arrowStartX + 25f, arrowStartY - 40f)
-                close()
-            }
-
-            // Pulsing effect
-            val pulse = (glowRadius / 30f * 0.3f) + 0.7f
-
-            arrowPaint.color = type.primaryColor
-            arrowPaint.alpha = (255 * pulse).toInt()
-            canvas.drawPath(path, arrowPaint)
-
-            // White outline
-            val outlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.WHITE
-                style = Paint.Style.STROKE
-                strokeWidth = 3f
-            }
-            canvas.drawPath(path, outlinePaint)
-
-            // "TAP!" text
-            val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.WHITE
-                textSize = 36f
-                textAlign = Paint.Align.CENTER
-                typeface = Typeface.DEFAULT_BOLD
-                setShadowLayer(4f, 2f, 2f, Color.BLACK)
-            }
-            canvas.drawText("TAP!", arrowStartX, arrowStartY + 50f, textPaint)
-        }
-    }
 
     private fun drawGoopBody(canvas: Canvas, cx: Float, cy: Float, @Suppress("UNUSED_PARAMETER") type: GoopType) {
         val path = Path()

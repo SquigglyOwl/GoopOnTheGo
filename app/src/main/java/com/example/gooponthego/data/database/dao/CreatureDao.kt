@@ -22,6 +22,9 @@ interface CreatureDao {
     @Query("SELECT * FROM creatures WHERE type = :type AND evolutionStage = 1")
     suspend fun getBaseCreatureByType(type: GoopType): Creature?
 
+    @Query("SELECT * FROM creatures WHERE type = :type AND evolutionStage = :stage LIMIT 1")
+    suspend fun getCreatureByTypeAndStage(type: GoopType, stage: Int): Creature?
+
     @Query("SELECT * FROM creatures WHERE evolvesFromId = :creatureId")
     suspend fun getEvolution(creatureId: Long): Creature?
 
